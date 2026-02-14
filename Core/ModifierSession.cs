@@ -1,0 +1,182 @@
+using WinMove.Config;
+using WinMove.Native;
+
+namespace WinMove.Core;
+
+/// <summary>
+/// Tracks held modifier keys and detects when the primary key changes while
+/// modifiers remain held. This enables "seamless key switching" — e.g. holding
+/// Win+Shift and pressing Z then X fires both MoveDrag and ResizeDrag without
+/// the user needing to release and re-press modifiers.
+///
+/// The first combo press is handled by RegisterHotKey / WM_HOTKEY (via HotkeyManager).
+/// Subsequent key switches while modifiers stay held are detected here via the
+/// low-level keyboard hook and fire ActionTriggered.
+/// </summary>
+public sealed class ModifierSession
+{
+    // VK codes for left/right variants of each modifier
+    private const uint VK_LSHIFT = 0xA0;
+    private const uint VK_RSHIFT = 0xA1;
+    private const uint VK_LCONTROL = 0xA2;
+    private const uint VK_RCONTROL = 0xA3;
+    private const uint VK_LMENU = 0xA4;
+    private const uint VK_RMENU = 0xA5;
+    private const uint VK_LWIN = 0x5B;
+    private const uint VK_RWIN = 0x5C;
+
+    private readonly HashSet<uint> _activeModifiers = new();
+    private uint _activePrimaryKey;
+    private bool _primaryKeyReleased = true;
+    private bool _sessionSeeded; // True after first WM_HOTKEY seeds the session
+
+    private Dictionary<(uint mods, uint vk), ActionType> _lookup = new();
+
+    /// <summary>
+    /// Fired when a key switch is detected (modifier held + new primary key).
+    /// NOT fired for the initial hotkey press (that goes through HotkeyManager).
+    /// </summary>
+    public event Action<ActionType>? ActionTriggered;
+
+    /// <summary>
+    /// Rebuild the reverse-lookup table from the current config.
+    /// Must be called on startup and whenever config changes.
+    /// </summary>
+    public void BuildLookup(AppConfig config)
+    {
+        var newLookup = new Dictionary<(uint mods, uint vk), ActionType>();
+
+        foreach (var (_, binding) in config.Hotkeys)
+        {
+            if (!ConfigManager.TryParseAction(binding.Action, out var actionType))
+                continue;
+            if (!ConfigManager.TryParseModifiers(binding.Modifiers, out uint modFlags))
+                continue;
+            if (!ConfigManager.TryParseKey(binding.Key, out uint vk))
+                continue;
+
+            newLookup[(modFlags, vk)] = actionType;
+        }
+
+        _lookup = newLookup;
+    }
+
+    /// <summary>
+    /// Called by TrayApplicationContext when a WM_HOTKEY fires, to seed the session
+    /// with the known modifier+key state so subsequent key switches work correctly.
+    /// </summary>
+    public void OnHotkeyFired(uint modFlags, uint vk)
+    {
+        // Seed the active modifiers from the MOD flags
+        _activeModifiers.Clear();
+
+        // We store canonical left-variant VK codes to represent each modifier
+        if ((modFlags & NativeConstants.MOD_WIN) != 0) _activeModifiers.Add(VK_LWIN);
+        if ((modFlags & NativeConstants.MOD_SHIFT) != 0) _activeModifiers.Add(VK_LSHIFT);
+        if ((modFlags & NativeConstants.MOD_CONTROL) != 0) _activeModifiers.Add(VK_LCONTROL);
+        if ((modFlags & NativeConstants.MOD_ALT) != 0) _activeModifiers.Add(VK_LMENU);
+
+        _activePrimaryKey = vk;
+        _primaryKeyReleased = false;
+        _sessionSeeded = true;
+    }
+
+    /// <summary>
+    /// Subscribe this to KeyboardHook.KeyStateChanged.
+    /// Tracks modifier and primary key state to detect key switches.
+    /// </summary>
+    public void OnKeyStateChanged(uint vkCode, bool isDown)
+    {
+        if (IsModifierKey(vkCode))
+        {
+            if (isDown)
+            {
+                _activeModifiers.Add(vkCode);
+            }
+            else
+            {
+                _activeModifiers.Remove(vkCode);
+                // Also remove the other variant (L/R) if present
+                _activeModifiers.Remove(GetOtherVariant(vkCode));
+
+                if (_activeModifiers.Count == 0)
+                {
+                    // All modifiers released — end session
+                    _activePrimaryKey = 0;
+                    _primaryKeyReleased = true;
+                    _sessionSeeded = false;
+                }
+            }
+        }
+        else // Primary key
+        {
+            if (isDown)
+            {
+                // Only fire if:
+                // 1. Session has been seeded by a WM_HOTKEY
+                // 2. We have active modifiers
+                // 3. The key is different from current primary, OR current primary was released (re-press)
+                if (_sessionSeeded && _activeModifiers.Count > 0
+                    && (vkCode != _activePrimaryKey || _primaryKeyReleased))
+                {
+                    _activePrimaryKey = vkCode;
+                    _primaryKeyReleased = false;
+
+                    uint modFlags = ConvertToModFlags();
+                    if (_lookup.TryGetValue((modFlags, vkCode), out var action))
+                    {
+                        ActionTriggered?.Invoke(action);
+                    }
+                }
+            }
+            else
+            {
+                if (vkCode == _activePrimaryKey)
+                {
+                    _primaryKeyReleased = true;
+                }
+            }
+        }
+    }
+
+    private uint ConvertToModFlags()
+    {
+        uint flags = 0;
+        foreach (var vk in _activeModifiers)
+        {
+            flags |= vk switch
+            {
+                VK_LWIN or VK_RWIN => NativeConstants.MOD_WIN,
+                VK_LSHIFT or VK_RSHIFT => NativeConstants.MOD_SHIFT,
+                VK_LCONTROL or VK_RCONTROL => NativeConstants.MOD_CONTROL,
+                VK_LMENU or VK_RMENU => NativeConstants.MOD_ALT,
+                _ => 0
+            };
+        }
+        return flags;
+    }
+
+    private static bool IsModifierKey(uint vkCode)
+    {
+        return vkCode is VK_LSHIFT or VK_RSHIFT
+            or VK_LCONTROL or VK_RCONTROL
+            or VK_LMENU or VK_RMENU
+            or VK_LWIN or VK_RWIN;
+    }
+
+    private static uint GetOtherVariant(uint vkCode)
+    {
+        return vkCode switch
+        {
+            VK_LSHIFT => VK_RSHIFT,
+            VK_RSHIFT => VK_LSHIFT,
+            VK_LCONTROL => VK_RCONTROL,
+            VK_RCONTROL => VK_LCONTROL,
+            VK_LMENU => VK_RMENU,
+            VK_RMENU => VK_LMENU,
+            VK_LWIN => VK_RWIN,
+            VK_RWIN => VK_LWIN,
+            _ => vkCode
+        };
+    }
+}

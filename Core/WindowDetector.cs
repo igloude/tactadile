@@ -1,0 +1,48 @@
+using WinMove.Native;
+
+namespace WinMove.Core;
+
+public sealed class WindowDetector
+{
+    private IntPtr _lastHwnd = IntPtr.Zero;
+    private POINT _lastCursorPos;
+
+    public IntPtr GetWindowUnderCursor()
+    {
+        if (!NativeMethods.GetCursorPos(out POINT pt))
+            return _lastHwnd; // Can't get cursor — use cached
+
+        // If mouse hasn't moved and we have a cached target, keep it.
+        // This ensures that if a hotkey moves a window out from under the cursor
+        // (e.g. snap left), subsequent hotkeys still target that same window
+        // until the user physically moves the mouse.
+        if (pt.X == _lastCursorPos.X && pt.Y == _lastCursorPos.Y && _lastHwnd != IntPtr.Zero)
+            return _lastHwnd;
+
+        // Mouse moved — resolve the window under the new position
+        IntPtr hwnd = NativeMethods.WindowFromPoint(pt);
+        if (hwnd != IntPtr.Zero)
+        {
+            // Get top-level window — WindowFromPoint may return a child control
+            IntPtr root = NativeMethods.GetAncestor(hwnd, NativeConstants.GA_ROOT);
+            hwnd = root != IntPtr.Zero ? root : hwnd;
+        }
+
+        // Filter out desktop and shell windows (the "empty space" background)
+        IntPtr desktop = NativeMethods.GetDesktopWindow();
+        IntPtr shell = NativeMethods.GetShellWindow();
+
+        if (hwnd == IntPtr.Zero || hwnd == desktop || hwnd == shell)
+        {
+            // Mouse moved to empty space — clear cache
+            _lastHwnd = IntPtr.Zero;
+            _lastCursorPos = pt;
+            return IntPtr.Zero;
+        }
+
+        // Valid window found — update cache
+        _lastHwnd = hwnd;
+        _lastCursorPos = pt;
+        return hwnd;
+    }
+}
