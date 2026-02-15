@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using WinMove.Config;
 
 namespace WinMove.UI;
@@ -8,8 +9,6 @@ public sealed class SettingsForm : Form
     private readonly DataGridView _grid;
     private readonly Button _saveButton;
     private readonly Button _resetButton;
-    private readonly Button _exportButton;
-    private readonly Button _importButton;
 
     // Hotkey capture state
     private int _capturingRowIndex = -1;
@@ -94,16 +93,21 @@ public sealed class SettingsForm : Form
         _resetButton = new Button { Text = "Reset to Defaults", Width = 120 };
         _resetButton.Click += OnResetDefaults;
 
-        _exportButton = new Button { Text = "Export...", Width = 80 };
-        _exportButton.Click += OnExport;
-
-        _importButton = new Button { Text = "Import...", Width = 80 };
-        _importButton.Click += OnImport;
+        var configMenuButton = new Button { Text = "Config", Width = 80 };
+        configMenuButton.Click += (s, e) =>
+        {
+            var menu = new ContextMenuStrip();
+            menu.Items.Add("Reload Config", null, (_, _) => OnReloadConfig());
+            menu.Items.Add("Open Config Folder", null, (_, _) => OnOpenConfigFolder());
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Export...", null, (_, _) => OnExport());
+            menu.Items.Add("Import...", null, (_, _) => OnImport());
+            menu.Show(configMenuButton, new Point(0, configMenuButton.Height));
+        };
 
         buttonPanel.Controls.Add(_saveButton);
         buttonPanel.Controls.Add(_resetButton);
-        buttonPanel.Controls.Add(_importButton);
-        buttonPanel.Controls.Add(_exportButton);
+        buttonPanel.Controls.Add(configMenuButton);
 
         Controls.Add(_grid);
         Controls.Add(buttonPanel);
@@ -261,7 +265,7 @@ public sealed class SettingsForm : Form
         }
     }
 
-    private void OnExport(object? sender, EventArgs e)
+    private void OnExport()
     {
         using var dialog = new SaveFileDialog
         {
@@ -278,7 +282,7 @@ public sealed class SettingsForm : Form
         }
     }
 
-    private void OnImport(object? sender, EventArgs e)
+    private void OnImport()
     {
         using var dialog = new OpenFileDialog
         {
@@ -293,6 +297,20 @@ public sealed class SettingsForm : Form
             MessageBox.Show("Configuration imported and applied.", "win-move",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+    }
+
+    private void OnReloadConfig()
+    {
+        _configManager.Reload();
+        LoadConfig();
+    }
+
+    private void OnOpenConfigFolder()
+    {
+        Process.Start(new ProcessStartInfo(ConfigManager.ConfigDirectory)
+        {
+            UseShellExecute = true
+        });
     }
 
     private static string FormatShortcut(List<string> modifiers, string key)

@@ -29,6 +29,7 @@ public sealed class ModifierSession
     private uint _activePrimaryKey;
     private bool _primaryKeyReleased = true;
     private bool _sessionSeeded; // True after first WM_HOTKEY seeds the session
+    private bool _justFired;     // True when ActionTriggered fired for the current keypress
 
     private Dictionary<(uint mods, uint vk), ActionType> _lookup = new();
 
@@ -37,6 +38,18 @@ public sealed class ModifierSession
     /// NOT fired for the initial hotkey press (that goes through HotkeyManager).
     /// </summary>
     public event Action<ActionType>? ActionTriggered;
+
+    /// <summary>
+    /// Returns true if ActionTriggered fired for the current keypress, then resets the flag.
+    /// Used by OnHotkeyAction to avoid double-dispatching when both the keyboard hook
+    /// and WM_HOTKEY fire for the same key event (hook is synchronous, WM_HOTKEY is posted).
+    /// </summary>
+    public bool ConsumeIfFired()
+    {
+        if (!_justFired) return false;
+        _justFired = false;
+        return true;
+    }
 
     /// <summary>
     /// Rebuild the reverse-lookup table from the current config.
@@ -79,6 +92,7 @@ public sealed class ModifierSession
         _activePrimaryKey = vk;
         _primaryKeyReleased = false;
         _sessionSeeded = true;
+        // Don't reset _justFired here — it needs to survive until ConsumeIfFired() is called
     }
 
     /// <summary>
@@ -125,6 +139,7 @@ public sealed class ModifierSession
                     uint modFlags = ConvertToModFlags();
                     if (_lookup.TryGetValue((modFlags, vkCode), out var action))
                     {
+                        _justFired = true;
                         ActionTriggered?.Invoke(action);
                     }
                 }

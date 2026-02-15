@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using WinMove.Config;
 using WinMove.Core;
 using WinMove.UI;
@@ -51,6 +50,13 @@ public sealed class TrayApplicationContext : ApplicationContext
     {
         // Seed the modifier session so subsequent key switches are detected
         _modifierSession.OnHotkeyFired(modFlags, vk);
+
+        // If ModifierSession already fired ActionTriggered for this same
+        // keypress (hook runs synchronously before WM_HOTKEY is posted),
+        // skip DispatchAction to avoid double-fire (e.g. snap cycle advancing twice).
+        if (_modifierSession.ConsumeIfFired())
+            return;
+
         DispatchAction(action);
     }
 
@@ -139,15 +145,6 @@ public sealed class TrayApplicationContext : ApplicationContext
         var contextMenu = new ContextMenuStrip();
 
         contextMenu.Items.Add("Settings", null, (s, e) => ShowSettings());
-        contextMenu.Items.Add("Reload Config", null, (s, e) => _configManager.Reload());
-        contextMenu.Items.Add("Open Config Folder", null, (s, e) =>
-        {
-            Process.Start(new ProcessStartInfo(ConfigManager.ConfigDirectory)
-            {
-                UseShellExecute = true
-            });
-        });
-        contextMenu.Items.Add(new ToolStripSeparator());
         contextMenu.Items.Add("About", null, (s, e) =>
         {
             MessageBox.Show("win-move v1.0\nWindow management utility\n\nAll actions target the window under the mouse cursor.",
