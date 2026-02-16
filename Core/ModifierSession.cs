@@ -9,9 +9,11 @@ namespace WinMove.Core;
 /// Win+Shift and pressing Z then X fires both MoveDrag and ResizeDrag without
 /// the user needing to release and re-press modifiers.
 ///
-/// The first combo press is handled by RegisterHotKey / WM_HOTKEY (via HotkeyManager).
-/// Subsequent key switches while modifiers stay held are detected here via the
-/// low-level keyboard hook and fire ActionTriggered.
+/// The first combo press is normally handled by RegisterHotKey / WM_HOTKEY (via
+/// HotkeyManager). However, if all keys are pressed simultaneously and WM_HOTKEY
+/// misses the race, the low-level keyboard hook acts as a fallback and fires the
+/// action directly. Subsequent key switches while modifiers stay held are also
+/// detected here via the hook and fire ActionTriggered.
 /// </summary>
 public sealed class ModifierSession
 {
@@ -126,21 +128,28 @@ public sealed class ModifierSession
         {
             if (isDown)
             {
-                // Only fire if:
-                // 1. Session has been seeded by a WM_HOTKEY
-                // 2. We have active modifiers
-                // 3. The key is different from current primary, OR current primary was released (re-press)
-                if (_sessionSeeded && _activeModifiers.Count > 0
+                if (_activeModifiers.Count > 0
                     && (vkCode != _activePrimaryKey || _primaryKeyReleased))
                 {
-                    _activePrimaryKey = vkCode;
-                    _primaryKeyReleased = false;
-
                     uint modFlags = ConvertToModFlags();
                     if (_lookup.TryGetValue((modFlags, vkCode), out var action))
                     {
+                        _activePrimaryKey = vkCode;
+                        _primaryKeyReleased = false;
+
+                        // Seed the session if not already seeded — this handles
+                        // the race where all keys are pressed simultaneously and
+                        // WM_HOTKEY hasn't fired yet.
+                        _sessionSeeded = true;
+
                         _justFired = true;
                         ActionTriggered?.Invoke(action);
+                    }
+                    else if (_sessionSeeded)
+                    {
+                        // Key switch to a non-configured key — still track it
+                        _activePrimaryKey = vkCode;
+                        _primaryKeyReleased = false;
                     }
                 }
             }
