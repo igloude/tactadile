@@ -301,6 +301,7 @@ public class HotkeyBindingViewModel : INotifyPropertyChanged
 
     public bool IsChangeEnabled => !IsProOnly;
     public Visibility ProBadgeVisibility => IsProOnly ? Visibility.Visible : Visibility.Collapsed;
+    public double RowContentOpacity => IsProOnly ? 0.4 : 1.0;
 
     public string ShortcutDisplay
     {

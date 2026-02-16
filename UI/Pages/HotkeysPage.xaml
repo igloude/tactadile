@@ -9,26 +9,32 @@
                 <DataTemplate>
                     <Grid ColumnSpacing="12" Padding="4,6">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="180" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="180" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="{Binding FriendlyName}" VerticalAlignment="Center" />
-                        <Border Grid.Column="1" CornerRadius="4" Padding="6,2"
+                        <Border Grid.Column="0" CornerRadius="4" Padding="6,2"
+                                VerticalAlignment="Center"
                                 Visibility="{Binding ProBadgeVisibility}"
                                 Background="#3B82F6">
                             <TextBlock Text="PRO" FontSize="10" FontWeight="SemiBold"
                                        Foreground="White" />
                         </Border>
+                        <TextBlock Text="{Binding FriendlyName}" Grid.Column="1"
+                                   VerticalAlignment="Center"
+                                   Opacity="{Binding RowContentOpacity}" />
                         <TextBlock Text="{Binding ShortcutDisplay}" Grid.Column="2"
                                    VerticalAlignment="Center" FontFamily="Consolas"
-                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                   Opacity="{Binding RowContentOpacity}" />
                         <Button Content="Change" Grid.Column="3" Click="OnChangeClick" Tag="{Binding}"
-                                IsEnabled="{Binding IsChangeEnabled}" />
+                                IsEnabled="{Binding IsChangeEnabled}"
+                                Opacity="{Binding RowContentOpacity}" />
                         <Button Content="Clear" Grid.Column="4" Click="OnClearClick" Tag="{Binding}"
-                                IsEnabled="{Binding IsChangeEnabled}" />
+                                IsEnabled="{Binding IsChangeEnabled}"
+                                Opacity="{Binding RowContentOpacity}" />
                     </Grid>
                 </DataTemplate>
             </local:HotkeyListTemplateSelector.HotkeyTemplate>
