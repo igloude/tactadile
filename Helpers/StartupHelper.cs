@@ -1,11 +1,11 @@
 using Microsoft.Win32;
 
-namespace WinMove.Helpers;
+namespace Tactadile.Helpers;
 
 public static class StartupHelper
 {
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string AppName = "WinMove";
+    private const string AppName = "Tactadile";
 
     public static bool IsEnabled
     {

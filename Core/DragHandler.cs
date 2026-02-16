@@ -1,7 +1,7 @@
 using Microsoft.UI.Dispatching;
-using WinMove.Native;
+using Tactadile.Native;
 
-namespace WinMove.Core;
+namespace Tactadile.Core;
 
 public sealed class DragHandler : IDisposable
 {
@@ -212,7 +212,7 @@ public sealed class DragHandler : IDisposable
 
     private static readonly string DebugLogPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "win-move", "edge-snap-debug.log");
+        "Tactadile", "edge-snap-debug.log");
     private static void DebugLog(string msg)
     {
         try { File.AppendAllText(DebugLogPath, $"{DateTime.Now:HH:mm:ss.fff} [Drag] {msg}\n"); }

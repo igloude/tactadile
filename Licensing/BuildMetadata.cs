@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Reflection;
 
-namespace WinMove.Licensing;
+namespace Tactadile.Licensing;
 
 public static class BuildMetadata
 {

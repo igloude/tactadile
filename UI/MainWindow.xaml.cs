@@ -1,9 +1,9 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using WinMove.Config;
-using WinMove.Licensing;
+using Tactadile.Config;
+using Tactadile.Licensing;
 
-namespace WinMove.UI;
+namespace Tactadile.UI;
 
 public record NavigationContext(ConfigManager Config, LicenseManager License);
 

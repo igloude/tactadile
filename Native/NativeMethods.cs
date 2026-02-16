@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace WinMove.Native;
+namespace Tactadile.Native;
 
 public static class NativeMethods
 {

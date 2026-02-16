@@ -1,4 +1,4 @@
-# win-move
+# Tactadile
 
 Windows system tray utility for managing windows with global hotkeys. All actions target the window under the mouse cursor, not the focused window.
 
@@ -30,7 +30,7 @@ All keybindings are user-configurable via the settings window or by editing the 
 
 ## Configuration
 
-Config lives at `%APPDATA%\win-move\config.json`. Changes are picked up automatically via file watcher. Copy the file between machines for portable keybindings.
+Config lives at `%APPDATA%\Tactadile\config.json`. Changes are picked up automatically via file watcher. Copy the file between machines for portable keybindings.
 
 ## Build & Run
 

@@ -1,9 +1,9 @@
 <Page
-    x:Class="WinMove.UI.Pages.AboutPage"
+    x:Class="Tactadile.UI.Pages.AboutPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <StackPanel Padding="24" Spacing="12" MaxWidth="500" HorizontalAlignment="Left">
-        <TextBlock Text="win-move" Style="{StaticResource TitleTextBlockStyle}" />
+        <TextBlock Text="Tactadile" Style="{StaticResource TitleTextBlockStyle}" />
         <TextBlock Text="v1.0" Style="{StaticResource SubtitleTextBlockStyle}"
                    Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
         <TextBlock TextWrapping="Wrap" Margin="0,8,0,0"

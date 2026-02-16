@@ -2,12 +2,12 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 
-namespace WinMove.Licensing;
+namespace Tactadile.Licensing;
 
 public sealed class LicenseClient
 {
     private static readonly HttpClient Http = new() { Timeout = TimeSpan.FromSeconds(15) };
-    private const string BaseUrl = "https://api.winmove.app";
+    private const string BaseUrl = "https://api.tactadile.app";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {

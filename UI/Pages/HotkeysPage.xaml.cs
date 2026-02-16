@@ -2,13 +2,13 @@ using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using WinMove.Config;
-using WinMove.Core;
-using WinMove.Native;
-using WinMove.UI;
-using LicenseManager = WinMove.Licensing.LicenseManager;
+using Tactadile.Config;
+using Tactadile.Core;
+using Tactadile.Native;
+using Tactadile.UI;
+using LicenseManager = Tactadile.Licensing.LicenseManager;
 
-namespace WinMove.UI.Pages;
+namespace Tactadile.UI.Pages;
 
 public sealed partial class HotkeysPage : Page
 {

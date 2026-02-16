@@ -1,4 +1,4 @@
-namespace WinMove.Native;
+namespace Tactadile.Native;
 
 public static class NativeConstants
 {

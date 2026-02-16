@@ -1,12 +1,12 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
-using WinMove.Config;
-using WinMove.Core;
-using WinMove.Helpers;
-using WinMove.Licensing;
-using WinMove.UI;
+using Tactadile.Config;
+using Tactadile.Core;
+using Tactadile.Helpers;
+using Tactadile.Licensing;
+using Tactadile.UI;
 
-namespace WinMove;
+namespace Tactadile;
 
 public partial class App : Application
 {
@@ -134,7 +134,7 @@ public partial class App : Application
     {
         if (!_licenseManager.IsActionAllowed(action))
         {
-            _trayIcon.ShowNotification("win-move",
+            _trayIcon.ShowNotification("Tactadile",
                 $"{ConfigManager.GetFriendlyActionName(action)} requires a Pro license.");
             return;
         }
@@ -207,6 +207,6 @@ public partial class App : Application
         _modifierSession.BuildLookup(newConfig);
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
 
-        _trayIcon.ShowNotification("win-move", "Configuration reloaded");
+        _trayIcon.ShowNotification("Tactadile", "Configuration reloaded");
     }
 }

@@ -3,9 +3,9 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using WinMove.Config;
+using Tactadile.Config;
 
-namespace WinMove.Licensing;
+namespace Tactadile.Licensing;
 
 public sealed class LicenseManager
 {
@@ -245,7 +245,7 @@ public sealed class LicenseManager
     {
         var key = LoadEncryptedKey();
         if (key == null) return null;
-        return $"https://store.winmove.app/renew?license={Uri.EscapeDataString(key)}";
+        return $"https://store.tactadile.app/renew?license={Uri.EscapeDataString(key)}";
     }
 
     /// <summary>
@@ -255,7 +255,7 @@ public sealed class LicenseManager
     {
         var key = LoadEncryptedKey();
         if (key == null) return null;
-        return $"https://store.winmove.app/upgrade?license={Uri.EscapeDataString(key)}";
+        return $"https://store.tactadile.app/upgrade?license={Uri.EscapeDataString(key)}";
     }
 
     private bool VerifySignature(LicenseToken token)

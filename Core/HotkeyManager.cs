@@ -1,8 +1,8 @@
 using System.Runtime.InteropServices;
-using WinMove.Config;
-using WinMove.Native;
+using Tactadile.Config;
+using Tactadile.Native;
 
-namespace WinMove.Core;
+namespace Tactadile.Core;
 
 public sealed class HotkeyManager : IDisposable
 {
@@ -87,7 +87,7 @@ public sealed class HotkeyManager : IDisposable
             var wc = new WNDCLASS
             {
                 lpfnWndProc = _wndProcDelegate,
-                lpszClassName = "WinMove_HotkeyMsgWnd",
+                lpszClassName = "Tactadile_HotkeyMsgWnd",
                 hInstance = hInstance
             };
             NativeMethods.RegisterClass(ref wc);

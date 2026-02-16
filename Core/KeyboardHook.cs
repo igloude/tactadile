@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using WinMove.Native;
+using Tactadile.Native;
 
-namespace WinMove.Core;
+namespace Tactadile.Core;
 
 public sealed class KeyboardHook : IDisposable
 {

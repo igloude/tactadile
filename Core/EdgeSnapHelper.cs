@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-using WinMove.Native;
+using Tactadile.Native;
 
-namespace WinMove.Core;
+namespace Tactadile.Core;
 
 public static class EdgeSnapHelper
 {
@@ -13,7 +13,7 @@ public static class EdgeSnapHelper
 
     private static readonly string LogPath = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "win-move", "edge-snap-debug.log");
+        "Tactadile", "edge-snap-debug.log");
 
     private static void Log(string msg)
     {

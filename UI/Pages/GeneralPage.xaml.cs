@@ -2,11 +2,11 @@ using System.Diagnostics;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using WinMove.Config;
-using WinMove.Helpers;
-using WinMove.UI;
+using Tactadile.Config;
+using Tactadile.Helpers;
+using Tactadile.UI;
 
-namespace WinMove.UI.Pages;
+namespace Tactadile.UI.Pages;
 
 public sealed partial class GeneralPage : Page
 {

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace WinMove.Licensing;
+namespace Tactadile.Licensing;
 
 public sealed class LicenseToken
 {

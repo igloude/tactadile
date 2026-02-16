@@ -7,8 +7,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWinUI>true</UseWinUI>
-    <AssemblyName>WinMove</AssemblyName>
-    <RootNamespace>WinMove</RootNamespace>
+    <AssemblyName>Tactadile</AssemblyName>
+    <RootNamespace>Tactadile</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
 
     <!-- Unpackaged deployment -->

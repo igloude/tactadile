@@ -1,11 +1,11 @@
-namespace WinMove;
+namespace Tactadile;
 
 static class Program
 {
     [STAThread]
     static void Main(string[] args)
     {
-        using var mutex = new Mutex(true, @"Global\WinMove_SingleInstance", out bool createdNew);
+        using var mutex = new Mutex(true, @"Global\Tactadile_SingleInstance", out bool createdNew);
         if (!createdNew)
             return; // Another instance is already running
 

@@ -1,7 +1,7 @@
 using System.Runtime.InteropServices;
-using WinMove.Native;
+using Tactadile.Native;
 
-namespace WinMove.Helpers;
+namespace Tactadile.Helpers;
 
 public sealed class TrayIconManager : IDisposable
 {
@@ -34,7 +34,7 @@ public sealed class TrayIconManager : IDisposable
         var wc = new WNDCLASS
         {
             lpfnWndProc = _wndProcDelegate,
-            lpszClassName = "WinMove_TrayWnd",
+            lpszClassName = "Tactadile_TrayWnd",
             hInstance = hInstance
         };
         NativeMethods.RegisterClass(ref wc);
@@ -55,7 +55,7 @@ public sealed class TrayIconManager : IDisposable
             uFlags = (uint)(NativeConstants.NIF_MESSAGE | NativeConstants.NIF_ICON | NativeConstants.NIF_TIP),
             uCallbackMessage = (uint)NativeConstants.WM_TRAYICON,
             hIcon = _hIcon,
-            szTip = "win-move"
+            szTip = "Tactadile"
         };
 
         NativeMethods.Shell_NotifyIcon(NativeConstants.NIM_ADD, ref _nid);

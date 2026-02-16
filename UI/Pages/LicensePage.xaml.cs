@@ -4,9 +4,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using WinMove.Licensing;
+using Tactadile.Licensing;
 
-namespace WinMove.UI.Pages;
+namespace Tactadile.UI.Pages;
 
 public sealed partial class LicensePage : Page
 {

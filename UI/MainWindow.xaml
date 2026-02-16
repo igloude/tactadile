@@ -1,8 +1,8 @@
 <Window
-    x:Class="WinMove.UI.MainWindow"
+    x:Class="Tactadile.UI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="win-move Settings">
+    Title="Tactadile Settings">
     <Grid>
         <NavigationView x:Name="NavView"
                         IsBackButtonVisible="Collapsed"

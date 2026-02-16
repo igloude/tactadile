@@ -1,6 +1,6 @@
-using WinMove.Native;
+using Tactadile.Native;
 
-namespace WinMove.Core;
+namespace Tactadile.Core;
 
 public sealed class WindowDetector
 {

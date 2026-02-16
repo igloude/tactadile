@@ -1,7 +1,7 @@
-using WinMove.Config;
-using WinMove.Native;
+using Tactadile.Config;
+using Tactadile.Native;
 
-namespace WinMove.Core;
+namespace Tactadile.Core;
 
 /// <summary>
 /// Tracks snap cycling state. Repeated snap presses in the same direction

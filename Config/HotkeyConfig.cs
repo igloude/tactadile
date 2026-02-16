@@ -1,4 +1,4 @@
-namespace WinMove.Config;
+namespace Tactadile.Config;
 
 public sealed class AppConfig
 {

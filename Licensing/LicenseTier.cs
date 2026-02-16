@@ -1,4 +1,4 @@
-namespace WinMove.Licensing;
+namespace Tactadile.Licensing;
 
 public enum LicenseTier
 {

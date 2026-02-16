@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace WinMove.Native;
+namespace Tactadile.Native;
 
 [StructLayout(LayoutKind.Sequential)]
 public struct POINT

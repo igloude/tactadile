@@ -1,12 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace WinMove.Config;
+namespace Tactadile.Config;
 
 public sealed class ConfigManager : IDisposable
 {
     public static readonly string ConfigDirectory = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "win-move");
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tactadile");
     public static readonly string ConfigFilePath = Path.Combine(ConfigDirectory, "config.json");
 
     private static readonly JsonSerializerOptions JsonOptions = new()

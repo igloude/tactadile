@@ -1,6 +1,6 @@
 using Microsoft.UI.Xaml.Controls;
 
-namespace WinMove.UI.Pages;
+namespace Tactadile.UI.Pages;
 
 public sealed partial class AboutPage : Page
 {
