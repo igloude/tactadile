@@ -84,6 +84,11 @@ public static class NativeConstants
     public const ushort VK_LEFT = 0x25;
     public const ushort VK_UP = 0x26;
     public const ushort VK_RIGHT = 0x27;
+    public const ushort VK_DOWN = 0x28;
+    public const ushort VK_TAB = 0x09;
+    public const ushort VK_D = 0x44;
+    public const ushort VK_OEM_PLUS = 0xBB;
+    public const ushort VK_OEM_MINUS = 0xBD;
 
     // Shell_NotifyIcon
     public const int NIM_ADD = 0x00000000;

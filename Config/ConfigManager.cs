@@ -89,7 +89,11 @@ public sealed class ConfigManager : IDisposable
             {
                 var json = File.ReadAllText(ConfigFilePath);
                 var config = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions);
-                if (config != null) return config;
+                if (config != null)
+                {
+                    BackfillDefaults(config);
+                    return config;
+                }
             }
             catch
             {
@@ -100,6 +104,17 @@ public sealed class ConfigManager : IDisposable
         var defaultConfig = CreateDefaultConfig();
         Save(defaultConfig);
         return defaultConfig;
+    }
+
+    /// <summary>
+    /// Adds any hotkey entries from the defaults that are missing in the user's config,
+    /// so newly added actions are always visible in the settings UI.
+    /// </summary>
+    private static void BackfillDefaults(AppConfig config)
+    {
+        var defaults = CreateDefaultConfig();
+        foreach (var (key, binding) in defaults.Hotkeys)
+            config.Hotkeys.TryAdd(key, binding);
     }
 
     private static AppConfig CreateDefaultConfig()
@@ -119,6 +134,12 @@ public sealed class ConfigManager : IDisposable
                 ["maximize"] = new() { Modifiers = ["Win", "Shift"], Key = "Up", Action = "Maximize" },
                 ["opacity_up"] = new() { Modifiers = ["Win", "Shift"], Key = "Oemplus", Action = "OpacityUp" },
                 ["opacity_down"] = new() { Modifiers = ["Win", "Shift"], Key = "OemMinus", Action = "OpacityDown" },
+                ["zoom_in"] = new() { Modifiers = [], Key = "", Action = "ZoomIn" },
+                ["zoom_out"] = new() { Modifiers = [], Key = "", Action = "ZoomOut" },
+                ["task_view"] = new() { Modifiers = [], Key = "", Action = "TaskView" },
+                ["next_virtual_desktop"] = new() { Modifiers = [], Key = "", Action = "NextVirtualDesktop" },
+                ["prev_virtual_desktop"] = new() { Modifiers = [], Key = "", Action = "PrevVirtualDesktop" },
+                ["minimize_all"] = new() { Modifiers = [], Key = "", Action = "MinimizeAll" },
             },
             GesturesEnabled = true,
             Gestures = new Dictionary<string, GestureBinding>
@@ -177,6 +198,10 @@ public sealed class ConfigManager : IDisposable
         "minimize", "toggle_minimize", "restore", "maximize",
         null,
         "opacity_up", "opacity_down",
+        null,
+        "zoom_in", "zoom_out",
+        null,
+        "task_view", "next_virtual_desktop", "prev_virtual_desktop", "minimize_all",
     ];
 
     // Parsing helpers used by HotkeyManager
@@ -292,6 +317,12 @@ public sealed class ConfigManager : IDisposable
             ActionType.SnapLeft => "Snap Left (cycle)",
             ActionType.SnapRight => "Snap Right (cycle)",
             ActionType.ToggleMinimize => "Minimize / Restore",
+            ActionType.ZoomIn => "Zoom In",
+            ActionType.ZoomOut => "Zoom Out",
+            ActionType.TaskView => "Task View",
+            ActionType.NextVirtualDesktop => "Next Virtual Desktop",
+            ActionType.PrevVirtualDesktop => "Previous Virtual Desktop",
+            ActionType.MinimizeAll => "Show Desktop",
             _ => action.ToString()
         };
     }

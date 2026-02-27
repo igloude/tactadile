@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Tactadile.Config;
 using Tactadile.Core;
 using Tactadile.Helpers;
+using Tactadile.Native;
 using Tactadile.Licensing;
 using Tactadile.UI;
 
@@ -168,6 +169,28 @@ public partial class App : Application
             return;
         }
 
+        // Global actions — no target window needed
+        switch (action)
+        {
+            case ActionType.TaskView:
+                KeystrokeSender.Send(NativeConstants.VK_LWIN, NativeConstants.VK_TAB);
+                return;
+            case ActionType.NextVirtualDesktop:
+                KeystrokeSender.Send(
+                    new ushort[] { NativeConstants.VK_LWIN, NativeConstants.VK_CONTROL },
+                    NativeConstants.VK_RIGHT);
+                return;
+            case ActionType.PrevVirtualDesktop:
+                KeystrokeSender.Send(
+                    new ushort[] { NativeConstants.VK_LWIN, NativeConstants.VK_CONTROL },
+                    NativeConstants.VK_LEFT);
+                return;
+            case ActionType.MinimizeAll:
+                KeystrokeSender.Send(NativeConstants.VK_LWIN, NativeConstants.VK_D);
+                return;
+        }
+
+        // Window-targeted actions
         var hwnd = _windowDetector.GetWindowUnderCursor();
         if (hwnd == IntPtr.Zero) return;
 
@@ -205,6 +228,14 @@ public partial class App : Application
             case ActionType.SnapLeft:
             case ActionType.SnapRight:
                 _snapTracker.Snap(hwnd, action, _manipulator);
+                break;
+            case ActionType.ZoomIn:
+                NativeMethods.SetForegroundWindow(hwnd);
+                KeystrokeSender.Send(NativeConstants.VK_CONTROL, NativeConstants.VK_OEM_PLUS);
+                break;
+            case ActionType.ZoomOut:
+                NativeMethods.SetForegroundWindow(hwnd);
+                KeystrokeSender.Send(NativeConstants.VK_CONTROL, NativeConstants.VK_OEM_MINUS);
                 break;
         }
     }

@@ -11,5 +11,11 @@ public enum ActionType
     OpacityDown,
     SnapLeft,
     SnapRight,
-    ToggleMinimize
+    ToggleMinimize,
+    ZoomIn,
+    ZoomOut,
+    TaskView,
+    NextVirtualDesktop,
+    PrevVirtualDesktop,
+    MinimizeAll
 }
