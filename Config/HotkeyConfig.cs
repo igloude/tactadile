@@ -4,6 +4,7 @@ public sealed class AppConfig
 {
     public int Version { get; set; } = 1;
     public bool EdgeSnappingEnabled { get; set; } = true;
+    public bool OverrideWindowsKeybinds { get; set; } = false;
     public Dictionary<string, HotkeyBinding> Hotkeys { get; set; } = new();
     public bool GesturesEnabled { get; set; } = true;
     public Dictionary<string, GestureBinding> Gestures { get; set; } = new();

@@ -11,6 +11,9 @@
         <ToggleSwitch x:Name="EdgeSnapToggle" Header="Edge snapping during move drag"
                       Toggled="OnEdgeSnapToggled" />
 
+        <ToggleSwitch x:Name="OverrideKeybindsToggle" Header="Override Windows keybinds"
+                      Toggled="OnOverrideKeybindsToggled" />
+
         <TextBlock Text="Config"
                    Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,16,0,4" />
 

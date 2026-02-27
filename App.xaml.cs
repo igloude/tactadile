@@ -83,6 +83,7 @@ public partial class App : Application
         _lifetimeWindow.AppWindow.Move(new Windows.Graphics.PointInt32(-32000, -32000));
 
         _hotkeyManager.RegisterAll();
+        UpdateHookOverrides();
         _trayIcon.Show();
 
         // Best-effort license refresh (fire-and-forget)
@@ -251,11 +252,20 @@ public partial class App : Application
 
         _hotkeyManager.UnregisterAll();
         _hotkeyManager.RegisterAll();
+        UpdateHookOverrides();
 
         _modifierSession.BuildLookup(newConfig);
         _gestureEngine.BuildLookup(newConfig);
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
 
         _trayIcon.ShowNotification("Tactadile", "Configuration reloaded");
+    }
+
+    private void UpdateHookOverrides()
+    {
+        var config = _configManager.CurrentConfig;
+        _keyboardHook.SetOverrides(
+            config.OverrideWindowsKeybinds,
+            _hotkeyManager.FailedCombos);
     }
 }

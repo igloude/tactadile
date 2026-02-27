@@ -10,7 +10,14 @@ public sealed class HotkeyManager : IDisposable
     private readonly Action<ActionType, uint, uint> _actionCallback; // (action, modFlags, vk)
     private readonly HiddenMessageWindow _messageWindow;
     private readonly Dictionary<int, ActionType> _registeredHotkeys = new();
+    private HashSet<(uint modFlags, uint vk)> _failedCombos = new();
     private int _nextId = 1;
+
+    /// <summary>
+    /// Combos where RegisterHotKey failed (e.g. Windows owns them).
+    /// When override mode is on, KeyboardHook suppresses these instead.
+    /// </summary>
+    public IReadOnlySet<(uint modFlags, uint vk)> FailedCombos => _failedCombos;
 
     public HotkeyManager(ConfigManager configManager, Action<ActionType, uint, uint> actionCallback)
     {
@@ -40,7 +47,10 @@ public sealed class HotkeyManager : IDisposable
             {
                 _registeredHotkeys[id] = actionType;
             }
-            // Silently skip if registration fails (key combo already taken)
+            else
+            {
+                _failedCombos.Add((modifiers, vk));
+            }
         }
     }
 
@@ -51,6 +61,7 @@ public sealed class HotkeyManager : IDisposable
             NativeMethods.UnregisterHotKey(_messageWindow.Handle, id);
         }
         _registeredHotkeys.Clear();
+        _failedCombos = new HashSet<(uint, uint)>();
         _nextId = 1;
     }
 
