@@ -77,11 +77,21 @@ public sealed class KeyboardHook : IDisposable
                 // Suppress overridden combos on key-down of non-modifier keys
                 if (_overrideEnabled && isDown && !IsModifierVk(hookStruct.vkCode))
                 {
-                    var combo = (ComputeModFlags(), hookStruct.vkCode);
+                    uint modFlags = ComputeModFlags();
+                    var combo = (modFlags, hookStruct.vkCode);
                     if (_overrideCombos.Contains(combo))
                     {
                         // Fire KeyStateChanged so ModifierSession dispatches the action
                         KeyStateChanged?.Invoke(hookStruct.vkCode, isDown);
+
+                        // Inject a "menu mask key" to prevent Start Menu ghost activation.
+                        // When WIN is held and we suppress the letter key, Windows would
+                        // interpret the bare WIN release as "open Start Menu". Injecting
+                        // a dummy keystroke (VK 0xE8, unassigned) tricks Windows into
+                        // thinking another key was pressed during the WIN hold.
+                        if ((modFlags & NativeConstants.MOD_WIN) != 0)
+                            SendMenuMaskKey();
+
                         return (IntPtr)1; // Suppress key from reaching Windows
                     }
                 }
@@ -102,6 +112,45 @@ public sealed class KeyboardHook : IDisposable
         if (_ctrlCount > 0) flags |= NativeConstants.MOD_CONTROL;
         if (_altCount > 0) flags |= NativeConstants.MOD_ALT;
         return flags;
+    }
+
+    /// <summary>
+    /// Injects a down+up of an unassigned VK code (0xE8) to prevent Windows
+    /// from opening the Start Menu when the WIN key is released after a
+    /// suppressed combo. Same technique used by AutoHotkey ("menu mask key").
+    /// </summary>
+    private static void SendMenuMaskKey()
+    {
+        const ushort VK_MASK = 0xE8; // Unassigned VK code
+
+        var inputs = new INPUT[2];
+        inputs[0] = new INPUT
+        {
+            type = NativeConstants.INPUT_KEYBOARD,
+            u = new InputUnion
+            {
+                ki = new KEYBDINPUT
+                {
+                    wVk = VK_MASK,
+                    dwExtraInfo = EdgeSnapHelper.Signature
+                }
+            }
+        };
+        inputs[1] = new INPUT
+        {
+            type = NativeConstants.INPUT_KEYBOARD,
+            u = new InputUnion
+            {
+                ki = new KEYBDINPUT
+                {
+                    wVk = VK_MASK,
+                    dwFlags = NativeConstants.KEYEVENTF_KEYUP,
+                    dwExtraInfo = EdgeSnapHelper.Signature
+                }
+            }
+        };
+
+        NativeMethods.SendInput(2, inputs, Marshal.SizeOf<INPUT>());
     }
 
     private static bool IsModifierVk(uint vk)
