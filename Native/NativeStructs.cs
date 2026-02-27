@@ -31,6 +31,16 @@ public struct MONITORINFO
 }
 
 [StructLayout(LayoutKind.Sequential)]
+public struct MSLLHOOKSTRUCT
+{
+    public POINT pt;
+    public uint mouseData;    // High word: wheel delta or XBUTTON id
+    public uint flags;
+    public uint time;
+    public IntPtr dwExtraInfo;
+}
+
+[StructLayout(LayoutKind.Sequential)]
 public struct KBDLLHOOKSTRUCT
 {
     public uint vkCode;

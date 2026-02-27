@@ -29,6 +29,7 @@ public sealed class HotkeyManager : IDisposable
                 continue;
             if (!ConfigManager.TryParseModifiers(binding.Modifiers, out uint modifiers))
                 continue;
+            // Modifier-only hotkeys (empty key) are handled by ModifierSession
             if (!ConfigManager.TryParseKey(binding.Key, out uint vk))
                 continue;
 

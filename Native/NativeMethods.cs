@@ -5,6 +5,7 @@ namespace Tactadile.Native;
 public static class NativeMethods
 {
     public delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+    public delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, IntPtr lParam);
     public delegate bool MonitorEnumDelegate(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
 
     // Cursor and window detection
@@ -68,6 +69,9 @@ public static class NativeMethods
     // Hooks
     [DllImport("user32.dll", SetLastError = true)]
     public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
 
     [DllImport("user32.dll", SetLastError = true)]
     public static extern bool UnhookWindowsHookEx(IntPtr hhk);

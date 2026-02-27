@@ -122,75 +122,132 @@ public sealed partial class HotkeysPage : Page
             return;
         }
 
-        var capturedModifiers = new HashSet<uint>();
-        uint capturedPrimaryKey = 0;
-        bool captured = false;
+        // Modifier checkboxes
+        var chkCtrl = new CheckBox { Content = "Ctrl", MinWidth = 0 };
+        var chkShift = new CheckBox { Content = "Shift", MinWidth = 0 };
+        var chkAlt = new CheckBox { Content = "Alt", MinWidth = 0 };
+        var chkWin = new CheckBox { Content = "Win", MinWidth = 0 };
 
-        var statusText = new TextBlock { Text = "Press a key combination...", FontSize = 16 };
+        // Pre-populate from current binding
+        foreach (var mod in vm.Binding.Modifiers)
+        {
+            switch (mod.ToLowerInvariant())
+            {
+                case "ctrl": case "control": chkCtrl.IsChecked = true; break;
+                case "shift": chkShift.IsChecked = true; break;
+                case "alt": chkAlt.IsChecked = true; break;
+                case "win": chkWin.IsChecked = true; break;
+            }
+        }
+
+        var modPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        modPanel.Children.Add(chkCtrl);
+        modPanel.Children.Add(chkShift);
+        modPanel.Children.Add(chkAlt);
+        modPanel.Children.Add(chkWin);
+
+        // Key capture area
+        string capturedKeyName = vm.Binding.Key ?? "";
+        var keyDisplay = new TextBlock
+        {
+            Text = string.IsNullOrEmpty(capturedKeyName) ? "(none)" : capturedKeyName,
+            VerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment.Center,
+            FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
+            FontSize = 14,
+            MinWidth = 80
+        };
+
+        var recordButton = new Button { Content = "Record" };
+        var clearKeyButton = new Button { Content = "Clear" };
+
+        var keyPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8 };
+        keyPanel.Children.Add(keyDisplay);
+        keyPanel.Children.Add(recordButton);
+        keyPanel.Children.Add(clearKeyButton);
+
+        var layout = new StackPanel { Spacing = 12 };
+        layout.Children.Add(new TextBlock { Text = "Modifiers:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+        layout.Children.Add(modPanel);
+        layout.Children.Add(new TextBlock { Text = "Key (optional):", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+        layout.Children.Add(keyPanel);
 
         var dialog = new ContentDialog
         {
             Title = $"Set hotkey for: {vm.FriendlyName}",
-            Content = statusText,
+            Content = layout,
+            PrimaryButtonText = "OK",
             CloseButtonText = "Cancel",
             XamlRoot = this.XamlRoot
         };
 
+        // Enable OK only when at least one modifier is checked
+        void UpdateOkEnabled(object? s = null, RoutedEventArgs? a = null)
+        {
+            dialog.IsPrimaryButtonEnabled =
+                chkCtrl.IsChecked == true ||
+                chkShift.IsChecked == true ||
+                chkAlt.IsChecked == true ||
+                chkWin.IsChecked == true;
+        }
+
+        chkCtrl.Checked += UpdateOkEnabled;
+        chkCtrl.Unchecked += UpdateOkEnabled;
+        chkShift.Checked += UpdateOkEnabled;
+        chkShift.Unchecked += UpdateOkEnabled;
+        chkAlt.Checked += UpdateOkEnabled;
+        chkAlt.Unchecked += UpdateOkEnabled;
+        chkWin.Checked += UpdateOkEnabled;
+        chkWin.Unchecked += UpdateOkEnabled;
+        UpdateOkEnabled();
+
+        // Record button: listen for one non-modifier key press
         var app = (App)Application.Current;
         var hook = app.KeyboardHook;
 
-        void OnKeyState(uint vkCode, bool isDown)
+        recordButton.Click += (s, a) =>
         {
-            if (captured) return;
+            recordButton.Content = "Press a key...";
+            recordButton.IsEnabled = false;
 
-            if (IsModifierKey(vkCode))
+            void OnKeyState(uint vkCode, bool isDown)
             {
-                if (isDown) capturedModifiers.Add(NormalizeModifier(vkCode));
-                else capturedModifiers.Remove(NormalizeModifier(vkCode));
+                if (!isDown) return;
+                if (IsModifierKey(vkCode)) return;
 
-                // Update display with current modifiers
-                if (capturedModifiers.Count > 0)
-                {
-                    var modNames = capturedModifiers.Select(ModifierVkToName).OrderBy(n => n);
-                    DispatcherQueue.TryEnqueue(() =>
-                        statusText.Text = string.Join(" + ", modNames) + " + ...");
-                }
-                else
-                {
-                    DispatcherQueue.TryEnqueue(() =>
-                        statusText.Text = "Press a key combination...");
-                }
-            }
-            else if (isDown && capturedModifiers.Count > 0)
-            {
-                capturedPrimaryKey = vkCode;
-                captured = true;
-
-                // Build the binding
-                var modList = capturedModifiers.Select(ModifierVkToName).OrderBy(n => n).ToList();
-                var keyName = ConfigManager.VkToKeyName(capturedPrimaryKey);
-
-                vm.Binding.Modifiers = modList;
-                vm.Binding.Key = keyName;
-                vm.NotifyChanged();
+                hook.KeyStateChanged -= OnKeyState;
+                capturedKeyName = ConfigManager.VkToKeyName(vkCode);
 
                 DispatcherQueue.TryEnqueue(() =>
                 {
-                    MarkDirty();
-                    dialog.Hide();
+                    keyDisplay.Text = capturedKeyName;
+                    recordButton.Content = "Record";
+                    recordButton.IsEnabled = true;
                 });
             }
-        }
 
-        hook.KeyStateChanged += OnKeyState;
+            hook.KeyStateChanged += OnKeyState;
+        };
 
-        try
+        clearKeyButton.Click += (s, a) =>
         {
-            await dialog.ShowAsync();
-        }
-        finally
+            capturedKeyName = "";
+            keyDisplay.Text = "(none)";
+        };
+
+        var result = await dialog.ShowAsync();
+
+        if (result == ContentDialogResult.Primary)
         {
-            hook.KeyStateChanged -= OnKeyState;
+            var modList = new List<string>();
+            if (chkCtrl.IsChecked == true) modList.Add("Ctrl");
+            if (chkShift.IsChecked == true) modList.Add("Shift");
+            if (chkAlt.IsChecked == true) modList.Add("Alt");
+            if (chkWin.IsChecked == true) modList.Add("Win");
+
+            vm.Binding.Modifiers = modList;
+            vm.Binding.Key = capturedKeyName;
+            vm.NotifyChanged();
+            MarkDirty();
         }
     }
 
@@ -307,9 +364,11 @@ public class HotkeyBindingViewModel : INotifyPropertyChanged
     {
         get
         {
-            if (string.IsNullOrEmpty(Binding.Key))
+            if (Binding.Modifiers.Count == 0 && string.IsNullOrEmpty(Binding.Key))
                 return "(none)";
-            var parts = new List<string>(Binding.Modifiers) { Binding.Key };
+            var parts = new List<string>(Binding.Modifiers);
+            if (!string.IsNullOrEmpty(Binding.Key))
+                parts.Add(Binding.Key);
             return string.Join(" + ", parts);
         }
     }

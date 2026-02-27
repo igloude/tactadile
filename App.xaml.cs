@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Tactadile.Config;
 using Tactadile.Core;
 using Tactadile.Helpers;
+using Tactadile.Native;
 using Tactadile.Licensing;
 using Tactadile.UI;
 
@@ -19,6 +20,8 @@ public partial class App : Application
     private readonly ModifierSession _modifierSession;
     private readonly DragHandler _dragHandler;
     private readonly SnapCycleTracker _snapTracker = new();
+    private readonly MouseHook _mouseHook;
+    private readonly GestureEngine _gestureEngine;
     private readonly TrayIconManager _trayIcon;
     private readonly DispatcherQueue _dispatcherQueue;
 
@@ -50,8 +53,16 @@ public partial class App : Application
         _dragHandler.EdgeSnappingEnabled = _configManager.CurrentConfig.EdgeSnappingEnabled;
         _hotkeyManager = new HotkeyManager(_configManager, OnHotkeyAction);
 
+        _mouseHook = new MouseHook();
+        _gestureEngine = new GestureEngine(_mouseHook, _dragHandler, _dispatcherQueue);
+        _gestureEngine.BuildLookup(_configManager.CurrentConfig);
+        _gestureEngine.GestureTriggered += OnGestureAction;
+
         _keyboardHook.KeyStateChanged += _modifierSession.OnKeyStateChanged;
+        _modifierSession.ModifierFlagsChanged += _gestureEngine.OnModifiersChanged;
+
         _keyboardHook.Install();
+        _mouseHook.Install();
 
         _configManager.ConfigChanged += OnConfigChanged;
 
@@ -104,8 +115,10 @@ public partial class App : Application
     private void ExitApplication()
     {
         _hotkeyManager.UnregisterAll();
+        _gestureEngine.Dispose();
         _dragHandler.Dispose();
         _hotkeyManager.Dispose();
+        _mouseHook.Dispose();
         _keyboardHook.Dispose();
         _configManager.Dispose();
         _trayIcon.Dispose();
@@ -126,6 +139,11 @@ public partial class App : Application
     }
 
     private void OnModifierSessionAction(ActionType action)
+    {
+        DispatchAction(action);
+    }
+
+    private void OnGestureAction(ActionType action)
     {
         DispatchAction(action);
     }
@@ -151,6 +169,28 @@ public partial class App : Application
             return;
         }
 
+        // Global actions — no target window needed
+        switch (action)
+        {
+            case ActionType.TaskView:
+                KeystrokeSender.Send(NativeConstants.VK_LWIN, NativeConstants.VK_TAB);
+                return;
+            case ActionType.NextVirtualDesktop:
+                KeystrokeSender.Send(
+                    new ushort[] { NativeConstants.VK_LWIN, NativeConstants.VK_CONTROL },
+                    NativeConstants.VK_RIGHT);
+                return;
+            case ActionType.PrevVirtualDesktop:
+                KeystrokeSender.Send(
+                    new ushort[] { NativeConstants.VK_LWIN, NativeConstants.VK_CONTROL },
+                    NativeConstants.VK_LEFT);
+                return;
+            case ActionType.MinimizeAll:
+                KeystrokeSender.Send(NativeConstants.VK_LWIN, NativeConstants.VK_D);
+                return;
+        }
+
+        // Window-targeted actions
         var hwnd = _windowDetector.GetWindowUnderCursor();
         if (hwnd == IntPtr.Zero) return;
 
@@ -189,6 +229,14 @@ public partial class App : Application
             case ActionType.SnapRight:
                 _snapTracker.Snap(hwnd, action, _manipulator);
                 break;
+            case ActionType.ZoomIn:
+                NativeMethods.SetForegroundWindow(hwnd);
+                KeystrokeSender.Send(NativeConstants.VK_CONTROL, NativeConstants.VK_OEM_PLUS);
+                break;
+            case ActionType.ZoomOut:
+                NativeMethods.SetForegroundWindow(hwnd);
+                KeystrokeSender.Send(NativeConstants.VK_CONTROL, NativeConstants.VK_OEM_MINUS);
+                break;
         }
     }
 
@@ -205,6 +253,7 @@ public partial class App : Application
         _hotkeyManager.RegisterAll();
 
         _modifierSession.BuildLookup(newConfig);
+        _gestureEngine.BuildLookup(newConfig);
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
 
         _trayIcon.ShowNotification("Tactadile", "Configuration reloaded");

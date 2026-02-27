@@ -34,12 +34,21 @@ public sealed class ModifierSession
     private bool _justFired;     // True when ActionTriggered fired for the current keypress
 
     private Dictionary<(uint mods, uint vk), ActionType> _lookup = new();
+    private Dictionary<uint, ActionType> _modifierOnlyLookup = new();
+    private uint _firedModifierOnlyCombo; // tracks which mod-only combo was already fired
 
     /// <summary>
     /// Fired when a key switch is detected (modifier held + new primary key).
     /// NOT fired for the initial hotkey press (that goes through HotkeyManager).
     /// </summary>
     public event Action<ActionType>? ActionTriggered;
+
+    /// <summary>
+    /// Fired whenever the set of held modifier keys changes.
+    /// Parameter is the current MOD_* bitmask (0 when all modifiers released).
+    /// Used by GestureEngine to arm/disarm gesture detection.
+    /// </summary>
+    public event Action<uint>? ModifierFlagsChanged;
 
     /// <summary>
     /// Returns true if ActionTriggered fired for the current keypress, then resets the flag.
@@ -60,6 +69,7 @@ public sealed class ModifierSession
     public void BuildLookup(AppConfig config)
     {
         var newLookup = new Dictionary<(uint mods, uint vk), ActionType>();
+        var newModOnlyLookup = new Dictionary<uint, ActionType>();
 
         foreach (var (_, binding) in config.Hotkeys)
         {
@@ -67,13 +77,20 @@ public sealed class ModifierSession
                 continue;
             if (!ConfigManager.TryParseModifiers(binding.Modifiers, out uint modFlags))
                 continue;
-            if (!ConfigManager.TryParseKey(binding.Key, out uint vk))
-                continue;
 
-            newLookup[(modFlags, vk)] = actionType;
+            if (ConfigManager.TryParseKey(binding.Key, out uint vk))
+            {
+                newLookup[(modFlags, vk)] = actionType;
+            }
+            else if (modFlags != 0)
+            {
+                // Modifier-only hotkey
+                newModOnlyLookup[modFlags] = actionType;
+            }
         }
 
         _lookup = newLookup;
+        _modifierOnlyLookup = newModOnlyLookup;
     }
 
     /// <summary>
@@ -108,12 +125,29 @@ public sealed class ModifierSession
             if (isDown)
             {
                 _activeModifiers.Add(vkCode);
+
+                // Check modifier-only hotkeys when no primary key is held
+                if (_activePrimaryKey == 0 || _primaryKeyReleased)
+                {
+                    uint modFlags = ConvertToModFlags();
+                    if (modFlags != _firedModifierOnlyCombo
+                        && _modifierOnlyLookup.TryGetValue(modFlags, out var action))
+                    {
+                        _firedModifierOnlyCombo = modFlags;
+                        _sessionSeeded = true;
+                        _justFired = true;
+                        ActionTriggered?.Invoke(action);
+                    }
+                }
             }
             else
             {
                 _activeModifiers.Remove(vkCode);
                 // Also remove the other variant (L/R) if present
                 _activeModifiers.Remove(GetOtherVariant(vkCode));
+
+                // Reset modifier-only fired tracking so the combo can fire again
+                _firedModifierOnlyCombo = 0;
 
                 if (_activeModifiers.Count == 0)
                 {
@@ -123,6 +157,8 @@ public sealed class ModifierSession
                     _sessionSeeded = false;
                 }
             }
+
+            ModifierFlagsChanged?.Invoke(ConvertToModFlags());
         }
         else // Primary key
         {

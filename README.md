@@ -35,10 +35,12 @@ Config lives at `%APPDATA%\Tactadile\config.json`. Changes are picked up automat
 ## Build & Run
 
 ```
-dotnet build
-dotnet run
+dotnet build -p:Platform=x64
+.\bin\x64\Debug\net8.0-windows10.0.19041.0\Tactadile.exe
 ```
 
-Runs as a single-instance system tray app. Right-click the tray icon for settings, config reload, or exit. `Ctrl+C` in the terminal to stop.
+> `dotnet run` doesn't work with this project because WinUI 3 requires an explicit platform and `dotnet run` resolves the wrong output path. Build first, then launch the exe directly.
 
-Requires .NET 8+ on Windows.
+Runs as a single-instance system tray app. Right-click the tray icon for settings, config reload, or exit.
+
+Requires .NET 8+ on Windows. For ARM devices, substitute `arm64` for `x64` above.
