@@ -55,7 +55,11 @@ public sealed class TrayIconManager : IDisposable
             uFlags = (uint)(NativeConstants.NIF_MESSAGE | NativeConstants.NIF_ICON | NativeConstants.NIF_TIP),
             uCallbackMessage = (uint)NativeConstants.WM_TRAYICON,
             hIcon = _hIcon,
+#if DEBUG
+            szTip = "Tactadile (Dev)"
+#else
             szTip = "Tactadile"
+#endif
         };
 
         NativeMethods.Shell_NotifyIcon(NativeConstants.NIM_ADD, ref _nid);

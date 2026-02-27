@@ -58,6 +58,10 @@ public sealed class LicenseManager
     /// </summary>
     public void Initialize()
     {
+#if DEBUG
+        CurrentTier = LicenseTier.Pro;
+        return;
+#else
         LastRefreshUtc = LoadRefreshTimestamp();
 
         if (!File.Exists(TokenFilePath))
@@ -89,13 +93,18 @@ public sealed class LicenseManager
         {
             CurrentTier = LicenseTier.Free;
         }
+#endif
     }
 
     public bool IsActionAllowed(ActionType action)
     {
+#if DEBUG
+        return true;
+#else
         if (CurrentTier is LicenseTier.Pro or LicenseTier.Lifetime)
             return true;
         return FreeActions.Contains(action);
+#endif
     }
 
     public bool IsUpdateEligible()

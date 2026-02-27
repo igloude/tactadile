@@ -22,7 +22,7 @@
     <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
 
     <!-- Disable auto-generated Program.Main from App.xaml (we provide our own) -->
-    <DefineConstants>DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
 
     <!-- Required for dotnet CLI builds without Visual Studio -->
     <EnableMsixTooling>true</EnableMsixTooling>

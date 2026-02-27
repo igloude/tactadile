@@ -44,3 +44,15 @@ dotnet build -p:Platform=x64
 Runs as a single-instance system tray app. Right-click the tray icon for settings, config reload, or exit.
 
 Requires .NET 8+ on Windows. For ARM devices, substitute `arm64` for `x64` above.
+
+## Development
+
+For hot-reload during development:
+
+```
+.\dev.ps1
+```
+
+This watches for `.cs` and `.xaml` file changes, automatically rebuilds and relaunches the app. Press `Ctrl+C` to stop. For ARM devices: `.\dev.ps1 -Platform arm64`.
+
+Debug builds default to a Pro license so all features are testable without activation.
