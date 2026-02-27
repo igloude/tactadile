@@ -6,6 +6,8 @@ using Tactadile.Licensing;
 namespace Tactadile.UI;
 
 public record NavigationContext(ConfigManager Config, LicenseManager License);
+public record AutoPositionNavigationContext(ConfigManager Config, LicenseManager License, bool ShowAppPicker)
+    : NavigationContext(Config, License);
 
 public sealed partial class MainWindow : Window
 {
@@ -45,6 +47,7 @@ public sealed partial class MainWindow : Window
             {
                 "HotkeysPage" => typeof(Pages.HotkeysPage),
                 "GeneralPage" => typeof(Pages.GeneralPage),
+                "AutoPositionPage" => typeof(Pages.AutoPositionPage),
                 "LicensePage" => typeof(Pages.LicensePage),
                 "AboutPage" => typeof(Pages.AboutPage),
                 _ => null
@@ -63,6 +66,24 @@ public sealed partial class MainWindow : Window
                 NavView.SelectedItem = navItem;
                 break;
             }
+        }
+    }
+
+    public void NavigateToAutoPosition(bool showAppPicker = false)
+    {
+        foreach (var item in NavView.MenuItems)
+        {
+            if (item is NavigationViewItem navItem && navItem.Tag?.ToString() == "AutoPositionPage")
+            {
+                NavView.SelectedItem = navItem;
+                break;
+            }
+        }
+
+        if (showAppPicker)
+        {
+            ContentFrame.Navigate(typeof(Pages.AutoPositionPage),
+                new AutoPositionNavigationContext(_configManager, _licenseManager, showAppPicker));
         }
     }
 }

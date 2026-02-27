@@ -122,4 +122,20 @@ public static class NativeConstants
     // Menu flags
     public const uint MF_STRING = 0x00000000;
     public const uint MF_SEPARATOR = 0x00000800;
+
+    // WinEventHook
+    public const uint EVENT_OBJECT_SHOW = 0x8002;
+    public const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+    public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
+    public const int OBJID_WINDOW = 0;
+
+    // OpenProcess
+    public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
+
+    // GetWindow
+    public const uint GW_OWNER = 4;
+
+    // Window styles
+    public const int GWL_STYLE = -16;
+    public const uint WS_CAPTION = 0x00C00000;
 }

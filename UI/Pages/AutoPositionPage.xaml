@@ -1,0 +1,56 @@
+<Page
+    x:Class="Tactadile.UI.Pages.AutoPositionPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Auto Positioning" Style="{StaticResource TitleTextBlockStyle}"
+                   Margin="0,0,0,4" />
+
+        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,12">
+            <ToggleSwitch x:Name="EnabledToggle"
+                          Header="Auto-position apps on launch"
+                          Toggled="OnEnabledToggled" />
+            <InfoBar x:Name="ProBanner" Severity="Warning" IsOpen="False" IsClosable="False"
+                     Title="Pro Feature"
+                     Message="Auto positioning requires a Pro or Lifetime license." />
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,0,0,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="SearchBox" PlaceholderText="Search rules..."
+                     TextChanged="OnSearchChanged" />
+            <Button Content="Add Rule" Grid.Column="1" Margin="8,0,0,0"
+                    Click="OnAddRule" Style="{StaticResource AccentButtonStyle}" />
+            <Button Content="Capture Current Window" Grid.Column="2" Margin="8,0,0,0"
+                    Click="OnCaptureCurrentWindow" />
+        </Grid>
+
+        <Grid Grid.Row="3">
+            <ListView x:Name="RulesList" SelectionMode="None"
+                      IsItemClickEnabled="False">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Padding" Value="0,4" />
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+            <TextBlock x:Name="EmptyState"
+                       Text="No rules yet. Add a rule to auto-position apps on launch."
+                       VerticalAlignment="Center" HorizontalAlignment="Center"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       Visibility="Collapsed" />
+        </Grid>
+    </Grid>
+</Page>

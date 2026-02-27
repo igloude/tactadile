@@ -21,6 +21,11 @@
                         <FontIcon Glyph="&#xE713;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="Auto Position" Tag="AutoPositionPage">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE745;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="License" Tag="LicensePage">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8D7;" />

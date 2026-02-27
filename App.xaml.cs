@@ -22,6 +22,8 @@ public partial class App : Application
     private readonly SnapCycleTracker _snapTracker = new();
     private readonly MouseHook _mouseHook;
     private readonly GestureEngine _gestureEngine;
+    private readonly WindowEventHook _windowEventHook;
+    private readonly LaunchRuleEngine _launchRuleEngine;
     private readonly TrayIconManager _trayIcon;
     private readonly DispatcherQueue _dispatcherQueue;
 
@@ -64,11 +66,16 @@ public partial class App : Application
         _keyboardHook.Install();
         _mouseHook.Install();
 
+        _windowEventHook = new WindowEventHook();
+        _launchRuleEngine = new LaunchRuleEngine(_windowEventHook, _manipulator, _dispatcherQueue);
+        _launchRuleEngine.LoadRules(_configManager.CurrentConfig);
+
         _configManager.ConfigChanged += OnConfigChanged;
 
         _trayIcon = new TrayIconManager(
             onShowSettings: ShowMainWindow,
             onShowAbout: ShowAbout,
+            onCreateRule: CreateRuleFromCurrentWindow,
             onExit: ExitApplication);
     }
 
@@ -85,6 +92,9 @@ public partial class App : Application
         _hotkeyManager.RegisterAll();
         UpdateHookOverrides();
         _trayIcon.Show();
+
+        if (_configManager.CurrentConfig.AutoPositionEnabled && _licenseManager.IsAutoPositionAllowed)
+            _launchRuleEngine.Start();
 
         // Best-effort license refresh (fire-and-forget)
         _ = TryRefreshLicenseAsync();
@@ -113,8 +123,15 @@ public partial class App : Application
         _mainWindow?.NavigateToAbout();
     }
 
+    private void CreateRuleFromCurrentWindow()
+    {
+        ShowMainWindow();
+        _mainWindow?.NavigateToAutoPosition(showAppPicker: true);
+    }
+
     private void ExitApplication()
     {
+        _launchRuleEngine.Dispose();
         _hotkeyManager.UnregisterAll();
         _gestureEngine.Dispose();
         _dragHandler.Dispose();
@@ -257,6 +274,12 @@ public partial class App : Application
         _modifierSession.BuildLookup(newConfig);
         _gestureEngine.BuildLookup(newConfig);
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
+
+        _launchRuleEngine.LoadRules(newConfig);
+        if (newConfig.AutoPositionEnabled && _licenseManager.IsAutoPositionAllowed)
+            _launchRuleEngine.Start();
+        else
+            _launchRuleEngine.Stop();
 
         _trayIcon.ShowNotification("Tactadile", "Configuration reloaded");
     }

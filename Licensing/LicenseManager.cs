@@ -107,6 +107,18 @@ public sealed class LicenseManager
 #endif
     }
 
+    public bool IsAutoPositionAllowed
+    {
+        get
+        {
+#if DEBUG
+            return true;
+#else
+            return CurrentTier is LicenseTier.Pro or LicenseTier.Lifetime;
+#endif
+        }
+    }
+
     public bool IsUpdateEligible()
     {
         if (CurrentTier == LicenseTier.Lifetime) return true;
