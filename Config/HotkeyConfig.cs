@@ -17,6 +17,7 @@ public sealed class HotkeyBinding
     public List<string> Modifiers { get; set; } = new();
     public string Key { get; set; } = string.Empty;
     public string Action { get; set; } = string.Empty;
+    public Dictionary<string, double> Parameters { get; set; } = new();
 }
 
 public sealed class GestureBinding

@@ -140,6 +140,28 @@ public sealed class ConfigManager : IDisposable
                 ["next_virtual_desktop"] = new() { Modifiers = [], Key = "", Action = "NextVirtualDesktop" },
                 ["prev_virtual_desktop"] = new() { Modifiers = [], Key = "", Action = "PrevVirtualDesktop" },
                 ["minimize_all"] = new() { Modifiers = [], Key = "", Action = "MinimizeAll" },
+                ["resize_window"] = new() { Modifiers = [], Key = "", Action = "ResizeWindow",
+                    Parameters = new() { ["Width"] = 1280, ["Height"] = 720 } },
+                ["center_window"] = new() { Modifiers = [], Key = "", Action = "CenterWindow",
+                    Parameters = new() { ["WidthPercent"] = 60, ["HeightPercent"] = 80 } },
+                ["cascade_windows"] = new() { Modifiers = [], Key = "", Action = "CascadeWindows",
+                    Parameters = new() { ["CascadeFromRight"] = 0 } },
+                ["nudge_up"] = new() { Modifiers = [], Key = "", Action = "NudgeUp",
+                    Parameters = new() { ["Distance"] = 10 } },
+                ["nudge_down"] = new() { Modifiers = [], Key = "", Action = "NudgeDown",
+                    Parameters = new() { ["Distance"] = 10 } },
+                ["nudge_left"] = new() { Modifiers = [], Key = "", Action = "NudgeLeft",
+                    Parameters = new() { ["Distance"] = 10 } },
+                ["nudge_right"] = new() { Modifiers = [], Key = "", Action = "NudgeRight",
+                    Parameters = new() { ["Distance"] = 10 } },
+                ["nudge_up_large"] = new() { Modifiers = [], Key = "", Action = "NudgeUp",
+                    Parameters = new() { ["Distance"] = 50 } },
+                ["nudge_down_large"] = new() { Modifiers = [], Key = "", Action = "NudgeDown",
+                    Parameters = new() { ["Distance"] = 50 } },
+                ["nudge_left_large"] = new() { Modifiers = [], Key = "", Action = "NudgeLeft",
+                    Parameters = new() { ["Distance"] = 50 } },
+                ["nudge_right_large"] = new() { Modifiers = [], Key = "", Action = "NudgeRight",
+                    Parameters = new() { ["Distance"] = 50 } },
             },
             GesturesEnabled = true,
             Gestures = new Dictionary<string, GestureBinding>
@@ -202,6 +224,12 @@ public sealed class ConfigManager : IDisposable
         "zoom_in", "zoom_out",
         null,
         "task_view", "next_virtual_desktop", "prev_virtual_desktop", "minimize_all",
+        null,
+        "resize_window", "center_window", "cascade_windows",
+        null,
+        "nudge_up", "nudge_down", "nudge_left", "nudge_right",
+        null,
+        "nudge_up_large", "nudge_down_large", "nudge_left_large", "nudge_right_large",
     ];
 
     // Parsing helpers used by HotkeyManager
@@ -323,7 +351,26 @@ public sealed class ConfigManager : IDisposable
             ActionType.NextVirtualDesktop => "Next Virtual Desktop",
             ActionType.PrevVirtualDesktop => "Previous Virtual Desktop",
             ActionType.MinimizeAll => "Show Desktop",
+            ActionType.ResizeWindow => "Resize Window",
+            ActionType.CascadeWindows => "Cascade Windows",
+            ActionType.CenterWindow => "Center Window",
+            ActionType.NudgeUp => "Nudge Up",
+            ActionType.NudgeDown => "Nudge Down",
+            ActionType.NudgeLeft => "Nudge Left",
+            ActionType.NudgeRight => "Nudge Right",
             _ => action.ToString()
+        };
+    }
+
+    public static string GetFriendlyConfigKeyName(string configKey, ActionType action)
+    {
+        return configKey switch
+        {
+            "nudge_up_large" => "Nudge Up (Large)",
+            "nudge_down_large" => "Nudge Down (Large)",
+            "nudge_left_large" => "Nudge Left (Large)",
+            "nudge_right_large" => "Nudge Right (Large)",
+            _ => GetFriendlyActionName(action)
         };
     }
 

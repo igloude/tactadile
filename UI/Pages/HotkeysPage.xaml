@@ -14,6 +14,7 @@
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <Border Grid.Column="0" CornerRadius="4" Padding="6,2"
                                 VerticalAlignment="Center"
@@ -29,10 +30,14 @@
                                    VerticalAlignment="Center" FontFamily="Consolas"
                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                    Opacity="{Binding RowContentOpacity}" />
-                        <Button Content="Change" Grid.Column="3" Click="OnChangeClick" Tag="{Binding}"
+                        <TextBlock Text="{Binding ParameterSummary}" Grid.Column="3"
+                                   VerticalAlignment="Center" FontFamily="Consolas" FontSize="12"
+                                   Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                   Opacity="{Binding RowContentOpacity}" />
+                        <Button Content="Change" Grid.Column="4" Click="OnChangeClick" Tag="{Binding}"
                                 IsEnabled="{Binding IsChangeEnabled}"
                                 Opacity="{Binding RowContentOpacity}" />
-                        <Button Content="Clear" Grid.Column="4" Click="OnClearClick" Tag="{Binding}"
+                        <Button Content="Clear" Grid.Column="5" Click="OnClearClick" Tag="{Binding}"
                                 IsEnabled="{Binding IsChangeEnabled}"
                                 Opacity="{Binding RowContentOpacity}" />
                     </Grid>

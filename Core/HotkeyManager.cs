@@ -7,9 +7,9 @@ namespace Tactadile.Core;
 public sealed class HotkeyManager : IDisposable
 {
     private readonly ConfigManager _configManager;
-    private readonly Action<ActionType, uint, uint> _actionCallback; // (action, modFlags, vk)
+    private readonly Action<ActionType, uint, uint, Dictionary<string, double>> _actionCallback; // (action, modFlags, vk, parameters)
     private readonly HiddenMessageWindow _messageWindow;
-    private readonly Dictionary<int, ActionType> _registeredHotkeys = new();
+    private readonly Dictionary<int, (ActionType action, Dictionary<string, double> parameters)> _registeredHotkeys = new();
     private HashSet<(uint modFlags, uint vk)> _failedCombos = new();
     private int _nextId = 1;
 
@@ -19,7 +19,7 @@ public sealed class HotkeyManager : IDisposable
     /// </summary>
     public IReadOnlySet<(uint modFlags, uint vk)> FailedCombos => _failedCombos;
 
-    public HotkeyManager(ConfigManager configManager, Action<ActionType, uint, uint> actionCallback)
+    public HotkeyManager(ConfigManager configManager, Action<ActionType, uint, uint, Dictionary<string, double>> actionCallback)
     {
         _configManager = configManager;
         _actionCallback = actionCallback;
@@ -45,7 +45,7 @@ public sealed class HotkeyManager : IDisposable
                 _messageWindow.Handle, id,
                 modifiers | NativeConstants.MOD_NOREPEAT, vk))
             {
-                _registeredHotkeys[id] = actionType;
+                _registeredHotkeys[id] = (actionType, binding.Parameters);
             }
             else
             {
@@ -67,12 +67,12 @@ public sealed class HotkeyManager : IDisposable
 
     private void OnWmHotkey(int hotkeyId, IntPtr lParam)
     {
-        if (_registeredHotkeys.TryGetValue(hotkeyId, out var action))
+        if (_registeredHotkeys.TryGetValue(hotkeyId, out var entry))
         {
             // WM_HOTKEY lParam: low word = modifier flags, high word = VK code
             uint modFlags = (uint)((long)lParam & 0xFFFF);
             uint vk = (uint)((long)lParam >> 16);
-            _actionCallback(action, modFlags, vk);
+            _actionCallback(entry.action, modFlags, vk, entry.parameters);
         }
     }
 

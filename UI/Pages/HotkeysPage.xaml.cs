@@ -62,13 +62,14 @@ public sealed partial class HotkeysPage : Page
             {
                 ConfigKey = entry,
                 ActionType = actionType,
-                FriendlyName = ConfigManager.GetFriendlyActionName(actionType),
+                FriendlyName = ConfigManager.GetFriendlyConfigKeyName(entry, actionType),
                 IsProOnly = _licenseManager != null && !_licenseManager.IsActionAllowed(actionType),
                 Binding = new HotkeyBinding
                 {
                     Modifiers = new List<string>(binding.Modifiers),
                     Key = binding.Key,
-                    Action = binding.Action
+                    Action = binding.Action,
+                    Parameters = new Dictionary<string, double>(binding.Parameters)
                 }
             };
             _bindings.Add(vm);
@@ -87,13 +88,14 @@ public sealed partial class HotkeysPage : Page
             {
                 ConfigKey = key,
                 ActionType = actionType,
-                FriendlyName = ConfigManager.GetFriendlyActionName(actionType),
+                FriendlyName = ConfigManager.GetFriendlyConfigKeyName(key, actionType),
                 IsProOnly = _licenseManager != null && !_licenseManager.IsActionAllowed(actionType),
                 Binding = new HotkeyBinding
                 {
                     Modifiers = new List<string>(binding.Modifiers),
                     Key = binding.Key,
-                    Action = binding.Action
+                    Action = binding.Action,
+                    Parameters = new Dictionary<string, double>(binding.Parameters)
                 }
             };
             _bindings.Add(vm);
@@ -171,6 +173,71 @@ public sealed partial class HotkeysPage : Page
         layout.Children.Add(new TextBlock { Text = "Key (optional):", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
         layout.Children.Add(keyPanel);
 
+        // Parameter inputs for actions that have configurable parameters
+        NumberBox? widthBox = null, heightBox = null;
+        NumberBox? widthPercentBox = null, heightPercentBox = null;
+        ToggleSwitch? cascadeToggle = null;
+        NumberBox? distanceBox = null;
+
+        if (vm.ActionType == ActionType.ResizeWindow)
+        {
+            layout.Children.Add(new TextBlock { Text = "Dimensions:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            widthBox = new NumberBox
+            {
+                Header = "Width (px)", Value = vm.Binding.Parameters.GetValueOrDefault("Width", 1280),
+                Minimum = 100, Maximum = 10000, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline
+            };
+            heightBox = new NumberBox
+            {
+                Header = "Height (px)", Value = vm.Binding.Parameters.GetValueOrDefault("Height", 720),
+                Minimum = 100, Maximum = 10000, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline
+            };
+            var dimPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+            dimPanel.Children.Add(widthBox);
+            dimPanel.Children.Add(heightBox);
+            layout.Children.Add(dimPanel);
+        }
+        else if (vm.ActionType == ActionType.CenterWindow)
+        {
+            layout.Children.Add(new TextBlock { Text = "Size (% of screen):", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            widthPercentBox = new NumberBox
+            {
+                Header = "Width %", Value = vm.Binding.Parameters.GetValueOrDefault("WidthPercent", 60),
+                Minimum = 10, Maximum = 100, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline
+            };
+            heightPercentBox = new NumberBox
+            {
+                Header = "Height %", Value = vm.Binding.Parameters.GetValueOrDefault("HeightPercent", 80),
+                Minimum = 10, Maximum = 100, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline
+            };
+            var pctPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+            pctPanel.Children.Add(widthPercentBox);
+            pctPanel.Children.Add(heightPercentBox);
+            layout.Children.Add(pctPanel);
+        }
+        else if (vm.ActionType == ActionType.CascadeWindows)
+        {
+            cascadeToggle = new ToggleSwitch
+            {
+                Header = "Cascade direction",
+                OnContent = "From top-right",
+                OffContent = "From top-left",
+                IsOn = vm.Binding.Parameters.GetValueOrDefault("CascadeFromRight", 0) != 0
+            };
+            layout.Children.Add(cascadeToggle);
+        }
+        else if (vm.ActionType is ActionType.NudgeUp or ActionType.NudgeDown
+                 or ActionType.NudgeLeft or ActionType.NudgeRight)
+        {
+            layout.Children.Add(new TextBlock { Text = "Nudge distance:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+            distanceBox = new NumberBox
+            {
+                Header = "Distance (px)", Value = vm.Binding.Parameters.GetValueOrDefault("Distance", 10),
+                Minimum = 1, Maximum = 500, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline
+            };
+            layout.Children.Add(distanceBox);
+        }
+
         var dialog = new ContentDialog
         {
             Title = $"Set hotkey for: {vm.FriendlyName}",
@@ -246,6 +313,28 @@ public sealed partial class HotkeysPage : Page
 
             vm.Binding.Modifiers = modList;
             vm.Binding.Key = capturedKeyName;
+
+            // Save parameter values
+            if (vm.ActionType == ActionType.ResizeWindow && widthBox != null && heightBox != null)
+            {
+                vm.Binding.Parameters["Width"] = widthBox.Value;
+                vm.Binding.Parameters["Height"] = heightBox.Value;
+            }
+            else if (vm.ActionType == ActionType.CenterWindow && widthPercentBox != null && heightPercentBox != null)
+            {
+                vm.Binding.Parameters["WidthPercent"] = widthPercentBox.Value;
+                vm.Binding.Parameters["HeightPercent"] = heightPercentBox.Value;
+            }
+            else if (vm.ActionType == ActionType.CascadeWindows && cascadeToggle != null)
+            {
+                vm.Binding.Parameters["CascadeFromRight"] = cascadeToggle.IsOn ? 1 : 0;
+            }
+            else if (vm.ActionType is ActionType.NudgeUp or ActionType.NudgeDown
+                     or ActionType.NudgeLeft or ActionType.NudgeRight && distanceBox != null)
+            {
+                vm.Binding.Parameters["Distance"] = distanceBox.Value;
+            }
+
             vm.NotifyChanged();
             MarkDirty();
         }
@@ -266,10 +355,14 @@ public sealed partial class HotkeysPage : Page
     {
         if (_configManager == null) return;
 
+        var existing = _configManager.CurrentConfig;
         var config = new AppConfig
         {
-            Version = 1,
-            EdgeSnappingEnabled = _configManager.CurrentConfig.EdgeSnappingEnabled
+            Version = existing.Version,
+            EdgeSnappingEnabled = existing.EdgeSnappingEnabled,
+            OverrideWindowsKeybinds = existing.OverrideWindowsKeybinds,
+            GesturesEnabled = existing.GesturesEnabled,
+            Gestures = existing.Gestures
         };
 
         foreach (var vm in _bindings)
@@ -373,10 +466,32 @@ public class HotkeyBindingViewModel : INotifyPropertyChanged
         }
     }
 
+    public string ParameterSummary
+    {
+        get
+        {
+            if (Binding.Parameters.Count == 0)
+                return "";
+            return ActionType switch
+            {
+                ActionType.ResizeWindow =>
+                    $"{Binding.Parameters.GetValueOrDefault("Width", 1280):0}x{Binding.Parameters.GetValueOrDefault("Height", 720):0}px",
+                ActionType.CenterWindow =>
+                    $"{Binding.Parameters.GetValueOrDefault("WidthPercent", 60):0}%x{Binding.Parameters.GetValueOrDefault("HeightPercent", 80):0}%",
+                ActionType.CascadeWindows =>
+                    Binding.Parameters.GetValueOrDefault("CascadeFromRight", 0) != 0 ? "from right" : "from left",
+                ActionType.NudgeUp or ActionType.NudgeDown or ActionType.NudgeLeft or ActionType.NudgeRight =>
+                    $"{Binding.Parameters.GetValueOrDefault("Distance", 10):0}px",
+                _ => ""
+            };
+        }
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public void NotifyChanged()
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ShortcutDisplay)));
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ParameterSummary)));
     }
 }

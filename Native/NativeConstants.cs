@@ -38,10 +38,17 @@ public static class NativeConstants
     public const int SW_MAXIMIZE = 3;
     public const int SW_RESTORE = 9;
 
+    // Window Styles
+    public const int GWL_STYLE = -16;
+    public const uint WS_CHILD = 0x40000000;
+
     // Extended Window Styles
     public const int GWL_EXSTYLE = -20;
     public const int WS_EX_LAYERED = 0x00080000;
     public const int WS_EX_TOPMOST = 0x00000008;
+
+    // GetWindow relationship
+    public const uint GW_OWNER = 4;
 
     // Layered Window Attributes
     public const uint LWA_ALPHA = 0x2;

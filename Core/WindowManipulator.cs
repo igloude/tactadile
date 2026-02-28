@@ -126,6 +126,98 @@ public sealed class WindowManipulator
         }
     }
 
+    public void ResizeWindow(IntPtr hwnd, int width, int height)
+    {
+        RestoreIfMaximized(hwnd);
+        NativeMethods.GetWindowRect(hwnd, out RECT currentRect);
+        SaveNormalRect(hwnd);
+        NativeMethods.SetWindowPos(hwnd, IntPtr.Zero,
+            currentRect.Left, currentRect.Top, width, height,
+            NativeConstants.SWP_NOZORDER | NativeConstants.SWP_NOACTIVATE);
+    }
+
+    public void CenterWindow(IntPtr hwnd, double widthPercent, double heightPercent)
+    {
+        RestoreIfMaximized(hwnd);
+        var monitor = MonitorHelper.GetMonitorForWindow(hwnd);
+        var work = monitor.WorkArea;
+
+        int newWidth = (int)(work.Width * widthPercent / 100.0);
+        int newHeight = (int)(work.Height * heightPercent / 100.0);
+        int x = work.Left + (work.Width - newWidth) / 2;
+        int y = work.Top + (work.Height - newHeight) / 2;
+
+        SaveNormalRect(hwnd);
+        NativeMethods.SetWindowPos(hwnd, IntPtr.Zero, x, y, newWidth, newHeight,
+            NativeConstants.SWP_NOZORDER | NativeConstants.SWP_NOACTIVATE);
+    }
+
+    public void NudgeWindow(IntPtr hwnd, int deltaX, int deltaY)
+    {
+        RestoreIfMaximized(hwnd);
+        NativeMethods.GetWindowRect(hwnd, out RECT currentRect);
+        NativeMethods.SetWindowPos(hwnd, IntPtr.Zero,
+            currentRect.Left + deltaX, currentRect.Top + deltaY, 0, 0,
+            NativeConstants.SWP_NOSIZE | NativeConstants.SWP_NOZORDER | NativeConstants.SWP_NOACTIVATE);
+    }
+
+    public void CascadeWindows(bool fromRight)
+    {
+        var windows = GetCascadeableWindows();
+        if (windows.Count == 0) return;
+
+        var monitors = MonitorHelper.GetAllMonitors();
+        if (monitors.Count == 0) return;
+        var work = monitors[0].WorkArea;
+
+        const int offsetStep = 30;
+        int cascadeWidth = (int)(work.Width * 0.7);
+        int cascadeHeight = (int)(work.Height * 0.7);
+
+        for (int i = 0; i < windows.Count; i++)
+        {
+            IntPtr hwnd = windows[i];
+            int offset = i * offsetStep;
+
+            int x = fromRight
+                ? work.Right - cascadeWidth - offset
+                : work.Left + offset;
+            int y = work.Top + offset;
+
+            if (x < work.Left) x = work.Left;
+            if (x + cascadeWidth > work.Right) cascadeWidth = work.Right - x;
+            if (y + cascadeHeight > work.Top + work.Height)
+                cascadeHeight = work.Top + work.Height - y;
+
+            RestoreIfMaximized(hwnd);
+            MoveWindow(hwnd, x, y, cascadeWidth, cascadeHeight);
+        }
+    }
+
+    private static List<IntPtr> GetCascadeableWindows()
+    {
+        var results = new List<IntPtr>();
+        IntPtr desktop = NativeMethods.GetDesktopWindow();
+        IntPtr shell = NativeMethods.GetShellWindow();
+
+        NativeMethods.EnumWindows((hwnd, lParam) =>
+        {
+            if (!NativeMethods.IsWindowVisible(hwnd)) return true;
+            if (NativeMethods.IsIconic(hwnd)) return true;
+            if (hwnd == desktop || hwnd == shell) return true;
+            if (NativeMethods.GetWindowTextLength(hwnd) == 0) return true;
+            if (NativeMethods.GetWindow(hwnd, NativeConstants.GW_OWNER) != IntPtr.Zero) return true;
+
+            int style = NativeMethods.GetWindowLong(hwnd, NativeConstants.GWL_STYLE);
+            if ((style & (int)NativeConstants.WS_CHILD) != 0) return true;
+
+            results.Add(hwnd);
+            return true;
+        }, IntPtr.Zero);
+
+        return results;
+    }
+
     private static void RestoreIfMaximized(IntPtr hwnd)
     {
         if (NativeMethods.IsZoomed(hwnd))

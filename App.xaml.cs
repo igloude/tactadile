@@ -146,27 +146,27 @@ public partial class App : Application
         Exit();
     }
 
-    private void OnHotkeyAction(ActionType action, uint modFlags, uint vk)
+    private void OnHotkeyAction(ActionType action, uint modFlags, uint vk, Dictionary<string, double> parameters)
     {
         _modifierSession.OnHotkeyFired(modFlags, vk);
 
         if (_modifierSession.ConsumeIfFired())
             return;
 
-        DispatchAction(action);
+        DispatchAction(action, parameters);
     }
 
     private void OnModifierSessionAction(ActionType action)
     {
-        DispatchAction(action);
+        DispatchAction(action, null);
     }
 
     private void OnGestureAction(ActionType action)
     {
-        DispatchAction(action);
+        DispatchAction(action, null);
     }
 
-    private void DispatchAction(ActionType action)
+    private void DispatchAction(ActionType action, Dictionary<string, double>? parameters)
     {
         if (!_licenseManager.IsActionAllowed(action))
         {
@@ -205,6 +205,10 @@ public partial class App : Application
                 return;
             case ActionType.MinimizeAll:
                 KeystrokeSender.Send(NativeConstants.VK_LWIN, NativeConstants.VK_D);
+                return;
+            case ActionType.CascadeWindows:
+                bool fromRight = parameters?.GetValueOrDefault("CascadeFromRight", 0) != 0;
+                _manipulator.CascadeWindows(fromRight);
                 return;
         }
 
@@ -254,6 +258,28 @@ public partial class App : Application
             case ActionType.ZoomOut:
                 NativeMethods.SetForegroundWindow(hwnd);
                 KeystrokeSender.Send(NativeConstants.VK_CONTROL, NativeConstants.VK_OEM_MINUS);
+                break;
+            case ActionType.ResizeWindow:
+                int rw = (int)(parameters?.GetValueOrDefault("Width", 1280) ?? 1280);
+                int rh = (int)(parameters?.GetValueOrDefault("Height", 720) ?? 720);
+                _manipulator.ResizeWindow(hwnd, rw, rh);
+                break;
+            case ActionType.CenterWindow:
+                double wp = parameters?.GetValueOrDefault("WidthPercent", 60) ?? 60;
+                double hp = parameters?.GetValueOrDefault("HeightPercent", 80) ?? 80;
+                _manipulator.CenterWindow(hwnd, wp, hp);
+                break;
+            case ActionType.NudgeUp:
+                _manipulator.NudgeWindow(hwnd, 0, -(int)(parameters?.GetValueOrDefault("Distance", 10) ?? 10));
+                break;
+            case ActionType.NudgeDown:
+                _manipulator.NudgeWindow(hwnd, 0, (int)(parameters?.GetValueOrDefault("Distance", 10) ?? 10));
+                break;
+            case ActionType.NudgeLeft:
+                _manipulator.NudgeWindow(hwnd, -(int)(parameters?.GetValueOrDefault("Distance", 10) ?? 10), 0);
+                break;
+            case ActionType.NudgeRight:
+                _manipulator.NudgeWindow(hwnd, (int)(parameters?.GetValueOrDefault("Distance", 10) ?? 10), 0);
                 break;
         }
     }

@@ -9,7 +9,10 @@
       "Bash(git checkout:*)",
       "Bash(git mv:*)",
       "Bash(wc:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(xargs cat:*)",
+      "Bash(Select-String -Pattern \"error\")",
+      "Bash(Select-String -NotMatch \"MSB3026|MSB3027|MSB3021\")"
     ]
   }
 }

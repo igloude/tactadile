@@ -17,5 +17,12 @@ public enum ActionType
     TaskView,
     NextVirtualDesktop,
     PrevVirtualDesktop,
-    MinimizeAll
+    MinimizeAll,
+    ResizeWindow,
+    CascadeWindows,
+    CenterWindow,
+    NudgeUp,
+    NudgeDown,
+    NudgeLeft,
+    NudgeRight
 }
