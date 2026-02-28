@@ -110,6 +110,11 @@ public sealed class LaunchRuleEngine : IDisposable
             _recentlyPositioned.Add(hwnd);
         }
 
+        // Hide the window off-screen immediately to prevent it from
+        // flashing at its old/default position during the delay.
+        NativeMethods.SetWindowPos(hwnd, IntPtr.Zero, -32000, -32000, 0, 0,
+            NativeConstants.SWP_NOSIZE | NativeConstants.SWP_NOZORDER | NativeConstants.SWP_NOACTIVATE);
+
         int delay = Math.Clamp(matchedRule.DelayMs, 50, 2000);
         var captured = matchedRule;
 
