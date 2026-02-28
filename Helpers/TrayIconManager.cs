@@ -7,6 +7,7 @@ public sealed class TrayIconManager : IDisposable
 {
     private const int CMD_SETTINGS = 1;
     private const int CMD_ABOUT = 2;
+    private const int CMD_CREATE_RULE = 4;
     private const int CMD_EXIT = 3;
     private const uint TRAY_ICON_ID = 1;
 
@@ -17,12 +18,14 @@ public sealed class TrayIconManager : IDisposable
 
     private readonly Action _onShowSettings;
     private readonly Action _onShowAbout;
+    private readonly Action _onCreateRule;
     private readonly Action _onExit;
 
-    public TrayIconManager(Action onShowSettings, Action onShowAbout, Action onExit)
+    public TrayIconManager(Action onShowSettings, Action onShowAbout, Action onCreateRule, Action onExit)
     {
         _onShowSettings = onShowSettings;
         _onShowAbout = onShowAbout;
+        _onCreateRule = onCreateRule;
         _onExit = onExit;
         _wndProcDelegate = WndProcCallback;
     }
@@ -97,6 +100,7 @@ public sealed class TrayIconManager : IDisposable
             {
                 case CMD_SETTINGS: _onShowSettings(); break;
                 case CMD_ABOUT: _onShowAbout(); break;
+                case CMD_CREATE_RULE: _onCreateRule(); break;
                 case CMD_EXIT: _onExit(); break;
             }
         }
@@ -110,6 +114,7 @@ public sealed class TrayIconManager : IDisposable
 
         var hMenu = NativeMethods.CreatePopupMenu();
         NativeMethods.AppendMenu(hMenu, NativeConstants.MF_STRING, CMD_SETTINGS, "Settings");
+        NativeMethods.AppendMenu(hMenu, NativeConstants.MF_STRING, CMD_CREATE_RULE, "Create auto-position rule...");
         NativeMethods.AppendMenu(hMenu, NativeConstants.MF_STRING, CMD_ABOUT, "About");
         NativeMethods.AppendMenu(hMenu, NativeConstants.MF_SEPARATOR, 0, null);
         NativeMethods.AppendMenu(hMenu, NativeConstants.MF_STRING, CMD_EXIT, "Exit");
