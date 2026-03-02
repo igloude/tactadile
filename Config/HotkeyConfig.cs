@@ -8,6 +8,7 @@ public sealed class AppConfig
     public Dictionary<string, HotkeyBinding> Hotkeys { get; set; } = new();
     public bool GesturesEnabled { get; set; } = true;
     public Dictionary<string, GestureBinding> Gestures { get; set; } = new();
+    public bool DisableNativeSnap { get; set; } = false;
     public bool AutoPositionEnabled { get; set; } = false;
     public List<LaunchRule> LaunchRules { get; set; } = new();
 }

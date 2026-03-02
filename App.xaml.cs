@@ -24,6 +24,7 @@ public partial class App : Application
     private readonly GestureEngine _gestureEngine;
     private readonly WindowEventHook _windowEventHook;
     private readonly LaunchRuleEngine _launchRuleEngine;
+    private readonly WinSnapOverrideManager _winSnapOverride;
     private readonly TrayIconManager _trayIcon;
     private readonly DispatcherQueue _dispatcherQueue;
 
@@ -39,6 +40,14 @@ public partial class App : Application
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
         _configManager = new ConfigManager();
+
+        _winSnapOverride = new WinSnapOverrideManager();
+        _winSnapOverride.RecoverIfNeeded();
+        if (_configManager.CurrentConfig.DisableNativeSnap)
+            _winSnapOverride.Enable();
+
+        AppDomain.CurrentDomain.ProcessExit += (_, _) => _winSnapOverride.Dispose();
+
         _licenseManager = new LicenseManager();
         _licenseManager.Initialize();
 
@@ -131,6 +140,7 @@ public partial class App : Application
 
     private void ExitApplication()
     {
+        _winSnapOverride.Dispose();
         _launchRuleEngine.Dispose();
         _hotkeyManager.UnregisterAll();
         _gestureEngine.Dispose();
@@ -300,6 +310,7 @@ public partial class App : Application
         _modifierSession.BuildLookup(newConfig);
         _gestureEngine.BuildLookup(newConfig);
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
+        _winSnapOverride.SetEnabled(newConfig.DisableNativeSnap);
 
         _launchRuleEngine.LoadRules(newConfig);
         if (newConfig.AutoPositionEnabled && _licenseManager.IsAutoPositionAllowed)

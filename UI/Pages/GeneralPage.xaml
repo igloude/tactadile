@@ -14,6 +14,9 @@
         <ToggleSwitch x:Name="OverrideKeybindsToggle" Header="Override Windows keybinds"
                       Toggled="OnOverrideKeybindsToggled" />
 
+        <ToggleSwitch x:Name="DisableNativeSnapToggle" Header="Disable Windows snap features"
+                      Toggled="OnDisableNativeSnapToggled" />
+
         <TextBlock Text="Config"
                    Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,16,0,4" />
 

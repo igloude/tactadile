@@ -136,6 +136,16 @@ public static class NativeConstants
     public const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
     public const int OBJID_WINDOW = 0;
 
+    // SystemParametersInfo — Window Arrangement (Aero Snap)
+    public const uint SPI_GETWINARRANGEMENT = 0x0082;
+    public const uint SPI_SETWINARRANGEMENT = 0x0083;
+    public const uint SPIF_SENDCHANGE = 0x0002;
+
+    // WM_SETTINGCHANGE broadcast
+    public const uint WM_SETTINGCHANGE = 0x001A;
+    public const uint SMTO_ABORTIFHUNG = 0x0002;
+    public static readonly IntPtr HWND_BROADCAST = new IntPtr(0xFFFF);
+
     // OpenProcess
     public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
 

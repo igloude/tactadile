@@ -211,6 +211,17 @@ public static class NativeMethods
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     public static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, System.Text.StringBuilder lpExeName, ref uint lpdwSize);
 
+    // SystemParametersInfo (int variant for SPI_GET/SETWINARRANGEMENT)
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern bool SystemParametersInfo(uint uiAction, uint uiParam, ref int pvParam, uint fWinIni);
+
+    // SendMessageTimeout (string lParam variant for WM_SETTINGCHANGE broadcast)
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    public static extern IntPtr SendMessageTimeout(
+        IntPtr hWnd, uint Msg, IntPtr wParam, string lParam,
+        uint fuFlags, uint uTimeout, out IntPtr lpdwResult);
+
+    // Window ownership / foreground
     [DllImport("user32.dll")]
     public static extern IntPtr GetForegroundWindow();
 }
