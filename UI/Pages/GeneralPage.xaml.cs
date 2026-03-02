@@ -33,6 +33,7 @@ public sealed partial class GeneralPage : Page
         StartupToggle.IsOn = StartupHelper.IsEnabled;
         EdgeSnapToggle.IsOn = _configManager.CurrentConfig.EdgeSnappingEnabled;
         OverrideKeybindsToggle.IsOn = _configManager.CurrentConfig.OverrideWindowsKeybinds;
+        DisableNativeSnapToggle.IsOn = _configManager.CurrentConfig.DisableNativeSnap;
         _loading = false;
     }
 
@@ -57,6 +58,15 @@ public sealed partial class GeneralPage : Page
 
         var config = _configManager.CurrentConfig;
         config.OverrideWindowsKeybinds = OverrideKeybindsToggle.IsOn;
+        _configManager.Save(config);
+    }
+
+    private void OnDisableNativeSnapToggled(object sender, RoutedEventArgs e)
+    {
+        if (_loading || _configManager == null) return;
+
+        var config = _configManager.CurrentConfig;
+        config.DisableNativeSnap = DisableNativeSnapToggle.IsOn;
         _configManager.Save(config);
     }
 

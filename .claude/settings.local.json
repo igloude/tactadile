@@ -12,7 +12,11 @@
       "Bash(wc:*)",
       "WebFetch(domain:github.com)",
       "Bash(git add CLAUDE.md .editorconfig .claude/settings.local.json plan.md)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git add Native/NativeConstants.cs Native/NativeMethods.cs)",
+      "Bash(git rebase --continue)",
+      "Bash(GIT_EDITOR=true git rebase --continue)",
+      "Bash(git add -A)"
     ]
   }
 }
