@@ -10,6 +10,7 @@ public sealed class ShakeRecognizer
 {
     private const int NoiseThresholdPx = 5;
 
+    private bool _initialized;
     private int _lastDirX; // +1 or -1, 0 = unset
     private int _lastDirY;
     private int _lastX;
@@ -20,6 +21,7 @@ public sealed class ShakeRecognizer
 
     public void Reset()
     {
+        _initialized = false;
         _lastDirX = 0;
         _lastDirY = 0;
         _lastX = 0;
@@ -34,11 +36,12 @@ public sealed class ShakeRecognizer
     /// </summary>
     public GestureType? Evaluate(CursorSample sample, double timeWindowMs, int minReversals, double minDisplacementPx)
     {
-        if (_lastDirX == 0 && _lastDirY == 0)
+        if (!_initialized)
         {
             // First sample — just record position
             _lastX = sample.X;
             _lastY = sample.Y;
+            _initialized = true;
             return null;
         }
 
