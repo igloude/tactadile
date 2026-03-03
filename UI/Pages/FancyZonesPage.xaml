@@ -1,0 +1,53 @@
+<Page
+    x:Class="Tactadile.UI.Pages.FancyZonesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <StackPanel Grid.Row="0" Spacing="4" Margin="0,0,0,12">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="FancyZones Companion" Style="{StaticResource TitleTextBlockStyle}" />
+                <Border CornerRadius="4" Padding="6,2" VerticalAlignment="Center"
+                        Background="{StaticResource TierBadgeProBrush}">
+                    <TextBlock Text="PRO" FontSize="10" FontWeight="SemiBold" Foreground="White" />
+                </Border>
+            </StackPanel>
+            <TextBlock Text="Bind hotkeys to snap windows to specific FancyZones zones"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+        </StackPanel>
+
+        <!-- Status + Toggle -->
+        <StackPanel Grid.Row="1" Spacing="8" Margin="0,0,0,16">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon x:Name="StatusIcon" Glyph="&#xE8FB;" FontSize="16"
+                          Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock x:Name="StatusText" Text="Checking..." VerticalAlignment="Center" />
+                <HyperlinkButton x:Name="RefreshButton" Content="Refresh" Click="OnRefresh" />
+            </StackPanel>
+            <ToggleSwitch x:Name="EnabledToggle" Header="Enable FancyZones companion"
+                          Toggled="OnEnabledToggled" />
+            <InfoBar x:Name="ProBanner" Severity="Warning" Title="Pro Feature"
+                     Message="FancyZones companion requires a Pro license." IsOpen="False"
+                     IsClosable="False" />
+        </StackPanel>
+
+        <!-- Layout list with zone bindings -->
+        <ScrollViewer Grid.Row="2">
+            <StackPanel x:Name="LayoutsPanel" Spacing="16" />
+        </ScrollViewer>
+
+        <!-- Save button -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="8" Padding="0,12,0,0">
+            <Button x:Name="SaveButton" Content="Save" Style="{StaticResource AccentButtonStyle}"
+                    Click="OnSave" IsEnabled="False" />
+        </StackPanel>
+    </Grid>
+</Page>

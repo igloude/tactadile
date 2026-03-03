@@ -24,5 +24,6 @@ public enum ActionType
     NudgeUp,
     NudgeDown,
     NudgeLeft,
-    NudgeRight
+    NudgeRight,
+    SnapToFancyZone
 }

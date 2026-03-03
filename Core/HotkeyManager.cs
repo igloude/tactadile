@@ -52,6 +52,36 @@ public sealed class HotkeyManager : IDisposable
                 _failedCombos.Add((modifiers, vk));
             }
         }
+
+        // Register FancyZones zone hotkeys
+        if (config.FancyZonesEnabled)
+        {
+            for (int i = 0; i < config.FancyZoneHotkeys.Count; i++)
+            {
+                var fzBinding = config.FancyZoneHotkeys[i];
+                if (!ConfigManager.TryParseModifiers(fzBinding.Modifiers, out uint fzMods))
+                    continue;
+                if (!ConfigManager.TryParseKey(fzBinding.Key, out uint fzVk))
+                    continue;
+
+                var parameters = new Dictionary<string, double>
+                {
+                    ["FancyZoneBindingIndex"] = i
+                };
+
+                int id = _nextId++;
+                if (NativeMethods.RegisterHotKey(
+                    _messageWindow.Handle, id,
+                    fzMods | NativeConstants.MOD_NOREPEAT, fzVk))
+                {
+                    _registeredHotkeys[id] = (ActionType.SnapToFancyZone, parameters);
+                }
+                else
+                {
+                    _failedCombos.Add((fzMods, fzVk));
+                }
+            }
+        }
     }
 
     public void UnregisterAll()

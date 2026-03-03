@@ -358,9 +358,23 @@ public sealed class ConfigManager : IDisposable
             ActionType.NudgeDown => "Nudge Down",
             ActionType.NudgeLeft => "Nudge Left",
             ActionType.NudgeRight => "Nudge Right",
+            ActionType.SnapToFancyZone => "Snap to FancyZone",
             _ => action.ToString()
         };
     }
+
+    public static string GetActionCategory(ActionType action) => action switch
+    {
+        ActionType.MoveDrag or ActionType.ResizeDrag => "Drag",
+        ActionType.SnapLeft or ActionType.SnapRight or ActionType.SnapToFancyZone => "Snap",
+        ActionType.Minimize or ActionType.Maximize or ActionType.Restore or ActionType.ToggleMinimize => "Window State",
+        ActionType.OpacityUp or ActionType.OpacityDown => "Opacity",
+        ActionType.ZoomIn or ActionType.ZoomOut => "Zoom",
+        ActionType.TaskView or ActionType.NextVirtualDesktop or ActionType.PrevVirtualDesktop or ActionType.MinimizeAll => "Virtual Desktops",
+        ActionType.ResizeWindow or ActionType.CenterWindow or ActionType.CascadeWindows => "Layout",
+        ActionType.NudgeUp or ActionType.NudgeDown or ActionType.NudgeLeft or ActionType.NudgeRight => "Nudge",
+        _ => "Other"
+    };
 
     public static string GetFriendlyConfigKeyName(string configKey, ActionType action)
     {

@@ -26,6 +26,11 @@
                         <FontIcon Glyph="&#xE745;" />
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
+                <NavigationViewItem Content="FancyZones" Tag="FancyZonesPage">
+                    <NavigationViewItem.Icon>
+                        <FontIcon Glyph="&#xE737;" />
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
                 <NavigationViewItem Content="License" Tag="LicensePage">
                     <NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE8D7;" />

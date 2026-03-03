@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Tactadile.Config;
+using Tactadile.Core.FancyZones;
 using Tactadile.Licensing;
 
 namespace Tactadile.UI;
@@ -8,18 +9,22 @@ namespace Tactadile.UI;
 public record NavigationContext(ConfigManager Config, LicenseManager License);
 public record AutoPositionNavigationContext(ConfigManager Config, LicenseManager License, bool ShowAppPicker)
     : NavigationContext(Config, License);
+public record FancyZonesNavigationContext(ConfigManager Config, LicenseManager License, FancyZonesLayoutProvider FancyZonesProvider)
+    : NavigationContext(Config, License);
 
 public sealed partial class MainWindow : Window
 {
     private readonly ConfigManager _configManager;
     private readonly LicenseManager _licenseManager;
+    private readonly FancyZonesLayoutProvider? _fancyZonesProvider;
 
     public bool IsClosed { get; private set; }
 
-    public MainWindow(ConfigManager configManager, LicenseManager licenseManager)
+    public MainWindow(ConfigManager configManager, LicenseManager licenseManager, FancyZonesLayoutProvider? fancyZonesProvider = null)
     {
         _configManager = configManager;
         _licenseManager = licenseManager;
+        _fancyZonesProvider = fancyZonesProvider;
         this.InitializeComponent();
 
         // Set window size
@@ -48,12 +53,17 @@ public sealed partial class MainWindow : Window
                 "HotkeysPage" => typeof(Pages.HotkeysPage),
                 "GeneralPage" => typeof(Pages.GeneralPage),
                 "AutoPositionPage" => typeof(Pages.AutoPositionPage),
+                "FancyZonesPage" => typeof(Pages.FancyZonesPage),
                 "LicensePage" => typeof(Pages.LicensePage),
                 "AboutPage" => typeof(Pages.AboutPage),
                 _ => null
             };
-            if (pageType != null)
-                ContentFrame.Navigate(pageType, new NavigationContext(_configManager, _licenseManager));
+            if (pageType == null) return;
+
+            object navParam = tag == "FancyZonesPage" && _fancyZonesProvider != null
+                ? new FancyZonesNavigationContext(_configManager, _licenseManager, _fancyZonesProvider)
+                : new NavigationContext(_configManager, _licenseManager);
+            ContentFrame.Navigate(pageType, navParam);
         }
     }
 

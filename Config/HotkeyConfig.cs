@@ -11,6 +11,8 @@ public sealed class AppConfig
     public bool DisableNativeSnap { get; set; } = false;
     public bool AutoPositionEnabled { get; set; } = false;
     public List<LaunchRule> LaunchRules { get; set; } = new();
+    public bool FancyZonesEnabled { get; set; } = false;
+    public List<FancyZoneHotkeyBinding> FancyZoneHotkeys { get; set; } = new();
 }
 
 public sealed class HotkeyBinding
@@ -27,6 +29,14 @@ public sealed class GestureBinding
     public List<string> Modifiers { get; set; } = new();
     public string Action { get; set; } = string.Empty;
     public Dictionary<string, double> Parameters { get; set; } = new();
+}
+
+public sealed class FancyZoneHotkeyBinding
+{
+    public List<string> Modifiers { get; set; } = new();
+    public string Key { get; set; } = string.Empty;
+    public string LayoutUuid { get; set; } = string.Empty;
+    public int ZoneIndex { get; set; }
 }
 
 public sealed class LaunchRule

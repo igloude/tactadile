@@ -362,7 +362,12 @@ public sealed partial class HotkeysPage : Page
             EdgeSnappingEnabled = existing.EdgeSnappingEnabled,
             OverrideWindowsKeybinds = existing.OverrideWindowsKeybinds,
             GesturesEnabled = existing.GesturesEnabled,
-            Gestures = existing.Gestures
+            Gestures = existing.Gestures,
+            DisableNativeSnap = existing.DisableNativeSnap,
+            AutoPositionEnabled = existing.AutoPositionEnabled,
+            LaunchRules = existing.LaunchRules,
+            FancyZonesEnabled = existing.FancyZonesEnabled,
+            FancyZoneHotkeys = existing.FancyZoneHotkeys
         };
 
         foreach (var vm in _bindings)
