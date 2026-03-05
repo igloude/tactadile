@@ -17,6 +17,12 @@ public sealed class KeyboardHook : IDisposable
     // Ref-counted modifier tracking for override matching
     private int _winCount, _shiftCount, _ctrlCount, _altCount;
 
+    // Win key delay: suppress immediate Start Menu on solo Win release
+    private bool _winKeyDelayEnabled;
+    private int _winKeyDelayMs = 250;
+    private Timer? _winDelayTimer;
+    private bool _winPressedAlone;
+
     public event Action<uint, bool>? KeyStateChanged; // (vkCode, isDown)
 
     public KeyboardHook()
@@ -32,6 +38,21 @@ public sealed class KeyboardHook : IDisposable
     {
         _overrideEnabled = enabled;
         _overrideCombos = new HashSet<(uint, uint)>(combos);
+    }
+
+    public void SetWinKeyDelay(bool enabled, int delayMs)
+    {
+        _winKeyDelayEnabled = enabled;
+        _winKeyDelayMs = delayMs;
+    }
+
+    /// <summary>
+    /// Marks Win as used in an action so the delay timer won't fire Start Menu.
+    /// Called from App.DispatchAction to cover gestures and modifier-only hotkeys.
+    /// </summary>
+    public void ClearWinPressedAlone()
+    {
+        _winPressedAlone = false;
     }
 
     public void Install()
@@ -72,7 +93,31 @@ public sealed class KeyboardHook : IDisposable
                         case 0xA2: case 0xA3: _ctrlCount = Math.Max(0, _ctrlCount + delta); break;
                         case 0xA4: case 0xA5: _altCount = Math.Max(0, _altCount + delta); break;
                     }
+
+                    // Win key delay tracking
+                    if (hookStruct.vkCode is 0x5B or 0x5C)
+                    {
+                        if (isDown)
+                        {
+                            _winPressedAlone = true;
+                            CancelWinDelayTimer();
+                        }
+                        else if (_winCount == 0 && _winPressedAlone && _winKeyDelayEnabled)
+                        {
+                            // Suppress Win UP, inject menu mask + synthetic Win UP
+                            // to release Windows' internal Win state without opening Start Menu
+                            SendMenuMaskKey();
+                            SendSyntheticWinUp();
+                            StartWinDelayTimer();
+                            KeyStateChanged?.Invoke(hookStruct.vkCode, isDown);
+                            return (IntPtr)1;
+                        }
+                    }
                 }
+
+                // Track non-modifier key-down while Win is held → Win used in chord
+                if (isDown && !IsModifierVk(hookStruct.vkCode) && _winCount > 0)
+                    _winPressedAlone = false;
 
                 // Suppress overridden combos on key-down of non-modifier keys
                 if (_overrideEnabled && isDown && !IsModifierVk(hookStruct.vkCode))
@@ -161,8 +206,61 @@ public sealed class KeyboardHook : IDisposable
             or 0x5B or 0x5C;       // LWIN, RWIN
     }
 
+    private void CancelWinDelayTimer()
+    {
+        var old = Interlocked.Exchange(ref _winDelayTimer, null);
+        old?.Dispose();
+    }
+
+    private void StartWinDelayTimer()
+    {
+        var timer = new Timer(_ => SimulateWinKeyTap(), null, _winKeyDelayMs, Timeout.Infinite);
+        var old = Interlocked.Exchange(ref _winDelayTimer, timer);
+        old?.Dispose();
+    }
+
+    /// <summary>
+    /// Timer callback: injects a Win key tap so Windows opens the Start Menu.
+    /// </summary>
+    private void SimulateWinKeyTap()
+    {
+        var inputs = new INPUT[2];
+        inputs[0] = MakeKeyInput(NativeConstants.VK_LWIN, keyUp: false);
+        inputs[1] = MakeKeyInput(NativeConstants.VK_LWIN, keyUp: true);
+        NativeMethods.SendInput(2, inputs, Marshal.SizeOf<INPUT>());
+    }
+
+    /// <summary>
+    /// Injects a synthetic Win UP so Windows knows the key is released,
+    /// without triggering the Start Menu (menu mask key was sent first).
+    /// </summary>
+    private static void SendSyntheticWinUp()
+    {
+        var inputs = new INPUT[1];
+        inputs[0] = MakeKeyInput(NativeConstants.VK_LWIN, keyUp: true);
+        NativeMethods.SendInput(1, inputs, Marshal.SizeOf<INPUT>());
+    }
+
+    private static INPUT MakeKeyInput(ushort vk, bool keyUp)
+    {
+        return new INPUT
+        {
+            type = NativeConstants.INPUT_KEYBOARD,
+            u = new InputUnion
+            {
+                ki = new KEYBDINPUT
+                {
+                    wVk = vk,
+                    dwFlags = keyUp ? NativeConstants.KEYEVENTF_KEYUP : 0u,
+                    dwExtraInfo = EdgeSnapHelper.Signature
+                }
+            }
+        };
+    }
+
     public void Dispose()
     {
+        CancelWinDelayTimer();
         if (_hookId != IntPtr.Zero)
         {
             NativeMethods.UnhookWindowsHookEx(_hookId);

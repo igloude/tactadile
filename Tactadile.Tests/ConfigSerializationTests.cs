@@ -155,6 +155,8 @@ public sealed class ConfigSerializationTests
         Assert.True(config.OverrideWindowsKeybinds);
         Assert.True(config.GesturesEnabled);
         Assert.False(config.AutoPositionEnabled);
+        Assert.False(config.WinKeyDelayEnabled);
+        Assert.Equal(250, config.WinKeyDelayMs);
         Assert.Empty(config.Hotkeys);
         Assert.Empty(config.Gestures);
         Assert.Empty(config.LaunchRules);
@@ -315,6 +317,22 @@ public sealed class ConfigSerializationTests
         Assert.Equal("MoveDrag", result.Hotkeys["move_drag"].Action);
         Assert.Equal("ScrollUp", result.Gestures["scroll_up"].Type);
         Assert.Equal("Centered", result.LaunchRules[0].Zone);
+    }
+
+    [Fact]
+    public void WinKeyDelay_RoundTrips()
+    {
+        var config = new AppConfig
+        {
+            WinKeyDelayEnabled = true,
+            WinKeyDelayMs = 500
+        };
+
+        var json = JsonSerializer.Serialize(config, JsonOptions);
+        var deserialized = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions)!;
+
+        Assert.True(deserialized.WinKeyDelayEnabled);
+        Assert.Equal(500, deserialized.WinKeyDelayMs);
     }
 
     [Fact]
