@@ -34,6 +34,11 @@ public sealed partial class GeneralPage : Page
         EdgeSnapToggle.IsOn = _configManager.CurrentConfig.EdgeSnappingEnabled;
         OverrideKeybindsToggle.IsOn = _configManager.CurrentConfig.OverrideWindowsKeybinds;
         DisableNativeSnapToggle.IsOn = _configManager.CurrentConfig.DisableNativeSnap;
+        WinKeyDelayToggle.IsOn = _configManager.CurrentConfig.WinKeyDelayEnabled;
+        WinKeyDelaySlider.Value = _configManager.CurrentConfig.WinKeyDelayMs;
+        WinKeyDelayValueText.Text = $"{_configManager.CurrentConfig.WinKeyDelayMs} ms";
+        WinKeyDelaySliderPanel.Visibility = WinKeyDelayToggle.IsOn
+            ? Visibility.Visible : Visibility.Collapsed;
         _loading = false;
     }
 
@@ -68,6 +73,27 @@ public sealed partial class GeneralPage : Page
         var config = _configManager.CurrentConfig;
         config.DisableNativeSnap = DisableNativeSnapToggle.IsOn;
         _configManager.Save(config);
+    }
+
+    private void OnWinKeyDelayToggled(object sender, RoutedEventArgs e)
+    {
+        if (_loading || _configManager == null) return;
+
+        var config = _configManager.CurrentConfig;
+        config.WinKeyDelayEnabled = WinKeyDelayToggle.IsOn;
+        _configManager.Save(config);
+        WinKeyDelaySliderPanel.Visibility = WinKeyDelayToggle.IsOn
+            ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    private void OnWinKeyDelaySliderChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        if (_loading || _configManager == null) return;
+
+        var config = _configManager.CurrentConfig;
+        config.WinKeyDelayMs = (int)WinKeyDelaySlider.Value;
+        _configManager.Save(config);
+        WinKeyDelayValueText.Text = $"{config.WinKeyDelayMs} ms";
     }
 
     private void OnOpenConfigFolder(object sender, RoutedEventArgs e)

@@ -100,6 +100,7 @@ public partial class App : Application
 
         _hotkeyManager.RegisterAll();
         UpdateHookOverrides();
+        UpdateWinKeyDelay();
         _trayIcon.Show();
 
         if (_configManager.CurrentConfig.AutoPositionEnabled && _licenseManager.IsAutoPositionAllowed)
@@ -178,6 +179,7 @@ public partial class App : Application
 
     private void DispatchAction(ActionType action, Dictionary<string, double>? parameters)
     {
+        _keyboardHook.ClearWinPressedAlone();
         if (!_licenseManager.IsActionAllowed(action))
         {
             _trayIcon.ShowNotification("Tactadile",
@@ -310,6 +312,7 @@ public partial class App : Application
         _modifierSession.BuildLookup(newConfig);
         _gestureEngine.BuildLookup(newConfig);
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
+        UpdateWinKeyDelay();
         _winSnapOverride.SetEnabled(newConfig.DisableNativeSnap);
 
         _launchRuleEngine.LoadRules(newConfig);
@@ -327,5 +330,11 @@ public partial class App : Application
         _keyboardHook.SetOverrides(
             config.OverrideWindowsKeybinds,
             _hotkeyManager.FailedCombos);
+    }
+
+    private void UpdateWinKeyDelay()
+    {
+        var config = _configManager.CurrentConfig;
+        _keyboardHook.SetWinKeyDelay(config.WinKeyDelayEnabled, config.WinKeyDelayMs);
     }
 }

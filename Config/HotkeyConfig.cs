@@ -9,6 +9,8 @@ public sealed class AppConfig
     public bool GesturesEnabled { get; set; } = true;
     public Dictionary<string, GestureBinding> Gestures { get; set; } = new();
     public bool DisableNativeSnap { get; set; } = false;
+    public bool WinKeyDelayEnabled { get; set; } = false;
+    public int WinKeyDelayMs { get; set; } = 250;
     public bool AutoPositionEnabled { get; set; } = false;
     public List<LaunchRule> LaunchRules { get; set; } = new();
 }

@@ -79,6 +79,33 @@
                           Toggled="OnDisableNativeSnapToggled" />
         </Grid>
 
+        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
+        <!-- Delay Start Menu on Win key -->
+        <Grid Padding="0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Delay Start Menu on Win key" FontWeight="SemiBold" />
+                <TextBlock Text="Delay the Start Menu from opening when Win is pressed alone, preventing flashes during chords"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+            <ToggleSwitch x:Name="WinKeyDelayToggle" Grid.Column="1"
+                          VerticalAlignment="Center" MinWidth="0"
+                          Toggled="OnWinKeyDelayToggled" />
+        </Grid>
+
+        <StackPanel x:Name="WinKeyDelaySliderPanel" Orientation="Horizontal" Spacing="12"
+                    Visibility="Collapsed" Padding="0,0,0,12">
+            <Slider x:Name="WinKeyDelaySlider" Minimum="100" Maximum="1000"
+                    StepFrequency="50" Width="200"
+                    ValueChanged="OnWinKeyDelaySliderChanged" />
+            <TextBlock x:Name="WinKeyDelayValueText" VerticalAlignment="Center" />
+        </StackPanel>
+
         <!-- Config section -->
         <TextBlock Text="Config"
                    Style="{StaticResource SubtitleTextBlockStyle}" Margin="0,24,0,4" />
