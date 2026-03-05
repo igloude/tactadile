@@ -156,8 +156,11 @@ try {
         $result = $watcher.WaitForChanged(
             [System.IO.WatcherChangeTypes]::Changed -bor
             [System.IO.WatcherChangeTypes]::Created -bor
-            [System.IO.WatcherChangeTypes]::Renamed
+            [System.IO.WatcherChangeTypes]::Renamed,
+            1000
         )
+
+        if ($result.TimedOut) { continue }
 
         # Filter: only .cs and .xaml files, skip bin/obj
         if ($result.Name -match '[\\/](bin|obj)[\\/]') { continue }

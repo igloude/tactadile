@@ -10,9 +10,9 @@ config   := "Debug"
 default:
     @just --list
 
-# Build and run a worktree with interactive selector + hot-reload (new window)
+# Build and run a worktree with interactive selector + hot-reload
 worktree:
-    Start-Process powershell -ArgumentList '-NoExit', '-File', '"{{justfile_directory()}}\dev.ps1"', '-Platform', '{{platform}}', '-Configuration', '{{config}}'
+    & "{{justfile_directory()}}\dev.ps1" -Platform '{{platform}}' -Configuration '{{config}}'
 
 # Build the main repo
 build:
