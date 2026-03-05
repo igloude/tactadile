@@ -351,6 +351,48 @@ public sealed class ConfigSerializationTests
     }
 
     [Fact]
+    public void HotkeyBinding_WithMouseKey_RoundTrips()
+    {
+        var binding = new HotkeyBinding
+        {
+            Modifiers = ["Win", "Shift"],
+            Key = "MouseX1",
+            Action = "MoveDrag",
+            Parameters = new() { ["Distance"] = 10 }
+        };
+
+        var json = JsonSerializer.Serialize(binding, JsonOptions);
+        var result = JsonSerializer.Deserialize<HotkeyBinding>(json, JsonOptions)!;
+
+        Assert.Equal("MouseX1", result.Key);
+        Assert.Equal(["Win", "Shift"], result.Modifiers);
+        Assert.Equal("MoveDrag", result.Action);
+        Assert.Equal(10, result.Parameters["Distance"]);
+    }
+
+    [Fact]
+    public void AppConfig_WithMouseHotkeys_RoundTrips()
+    {
+        var config = new AppConfig
+        {
+            Hotkeys = new Dictionary<string, HotkeyBinding>
+            {
+                ["mouse_move"] = new() { Modifiers = ["Ctrl"], Key = "MouseLeft", Action = "MoveDrag" },
+                ["bare_xbutton"] = new() { Modifiers = [], Key = "MouseX1", Action = "Minimize" },
+                ["scroll_zoom"] = new() { Modifiers = ["Ctrl"], Key = "MouseScrollUp", Action = "ZoomIn" },
+            }
+        };
+
+        var json = JsonSerializer.Serialize(config, JsonOptions);
+        var result = JsonSerializer.Deserialize<AppConfig>(json, JsonOptions)!;
+
+        Assert.Equal(3, result.Hotkeys.Count);
+        Assert.Equal("MouseLeft", result.Hotkeys["mouse_move"].Key);
+        Assert.Equal("MouseX1", result.Hotkeys["bare_xbutton"].Key);
+        Assert.Equal("MouseScrollUp", result.Hotkeys["scroll_zoom"].Key);
+    }
+
+    [Fact]
     public void LaunchRule_NewInstance_HasUniqueId()
     {
         var rule1 = new LaunchRule();

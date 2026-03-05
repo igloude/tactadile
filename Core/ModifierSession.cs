@@ -82,9 +82,9 @@ public sealed class ModifierSession
             {
                 newLookup[(modFlags, vk)] = actionType;
             }
-            else if (modFlags != 0)
+            else if (modFlags != 0 && !ConfigManager.IsMouseButton(binding.Key))
             {
-                // Modifier-only hotkey
+                // Modifier-only hotkey (skip mouse button bindings — handled by MouseHotkeyMatcher)
                 newModOnlyLookup[modFlags] = actionType;
             }
         }

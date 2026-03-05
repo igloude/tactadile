@@ -304,6 +304,44 @@ public sealed class ConfigManager : IDisposable
     // Reverse map for displaying VK code as key name
     private static readonly Dictionary<uint, string> VkToNameMap;
 
+    // Mouse button name map — keyed by config string name, value is a synthetic ID
+    // in a reserved range (0x10000+) that won't collide with any Win32 VK code.
+    private static readonly Dictionary<string, uint> MouseButtonMap = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["MouseLeft"]        = 0x10001,
+        ["MouseRight"]       = 0x10002,
+        ["MouseMiddle"]      = 0x10003,
+        ["MouseX1"]          = 0x10004,
+        ["MouseX2"]          = 0x10005,
+        ["MouseScrollUp"]    = 0x10006,
+        ["MouseScrollDown"]  = 0x10007,
+        ["MouseScrollLeft"]  = 0x10008,
+        ["MouseScrollRight"] = 0x10009,
+        ["MouseDoubleClick"] = 0x1000A,
+        ["MouseTripleClick"] = 0x1000B,
+        // Higher XButtons for gaming mice (3-20)
+        ["MouseX3"]          = 0x10010,
+        ["MouseX4"]          = 0x10011,
+        ["MouseX5"]          = 0x10012,
+        ["MouseX6"]          = 0x10013,
+        ["MouseX7"]          = 0x10014,
+        ["MouseX8"]          = 0x10015,
+        ["MouseX9"]          = 0x10016,
+        ["MouseX10"]         = 0x10017,
+        ["MouseX11"]         = 0x10018,
+        ["MouseX12"]         = 0x10019,
+        ["MouseX13"]         = 0x1001A,
+        ["MouseX14"]         = 0x1001B,
+        ["MouseX15"]         = 0x1001C,
+        ["MouseX16"]         = 0x1001D,
+        ["MouseX17"]         = 0x1001E,
+        ["MouseX18"]         = 0x1001F,
+        ["MouseX19"]         = 0x10020,
+        ["MouseX20"]         = 0x10021,
+    };
+
+    private static readonly Dictionary<uint, string> MouseIdToNameMap;
+
     static ConfigManager()
     {
         VkToNameMap = new Dictionary<uint, string>();
@@ -312,6 +350,10 @@ public sealed class ConfigManager : IDisposable
             // First mapping wins (prefer canonical name)
             VkToNameMap.TryAdd(vk, name);
         }
+
+        MouseIdToNameMap = new Dictionary<uint, string>();
+        foreach (var (name, id) in MouseButtonMap)
+            MouseIdToNameMap.TryAdd(id, name);
     }
 
     public static bool TryParseModifiers(List<string> modifiers, out uint result)
@@ -339,7 +381,66 @@ public sealed class ConfigManager : IDisposable
 
     public static string VkToKeyName(uint vk)
     {
-        return VkToNameMap.TryGetValue(vk, out var name) ? name : $"0x{vk:X2}";
+        if (VkToNameMap.TryGetValue(vk, out var name)) return name;
+        if (MouseIdToNameMap.TryGetValue(vk, out var mouseName)) return mouseName;
+        return $"0x{vk:X2}";
+    }
+
+    /// <summary>Returns true if the key name refers to a mouse button.</summary>
+    public static bool IsMouseButton(string? keyName)
+        => !string.IsNullOrEmpty(keyName) && MouseButtonMap.ContainsKey(keyName);
+
+    /// <summary>Parses a mouse button name to its synthetic ID.</summary>
+    public static bool TryParseMouseButton(string keyName, out uint mouseId)
+        => MouseButtonMap.TryGetValue(keyName, out mouseId);
+
+    /// <summary>Converts a synthetic mouse ID back to its config name.</summary>
+    public static string MouseIdToName(uint mouseId)
+        => MouseIdToNameMap.TryGetValue(mouseId, out var name) ? name : $"Mouse0x{mouseId:X}";
+
+    /// <summary>
+    /// Maps a WM_* message type and mouseData (from MSLLHOOKSTRUCT) to a synthetic mouse ID.
+    /// Returns 0 if the message is not a recognized mouse button event.
+    /// </summary>
+    public static uint MouseMessageToId(int messageType, uint mouseData)
+    {
+        int xButton = (int)(mouseData >> 16);
+        return messageType switch
+        {
+            Native.NativeConstants.WM_LBUTTONDOWN => 0x10001,
+            Native.NativeConstants.WM_RBUTTONDOWN => 0x10002,
+            Native.NativeConstants.WM_MBUTTONDOWN => 0x10003,
+            Native.NativeConstants.WM_XBUTTONDOWN => xButton switch
+            {
+                1 => 0x10004,  // XBUTTON1
+                2 => 0x10005,  // XBUTTON2
+                >= 3 and <= 20 => (uint)(0x10010 + (xButton - 3)),
+                _ => 0
+            },
+            _ => 0
+        };
+    }
+
+    /// <summary>Returns a friendly display name for a mouse button key name.</summary>
+    public static string GetFriendlyMouseButtonName(string keyName)
+    {
+        return keyName switch
+        {
+            "MouseLeft" => "Left Click",
+            "MouseRight" => "Right Click",
+            "MouseMiddle" => "Middle Click",
+            "MouseX1" => "XButton 1 (Back)",
+            "MouseX2" => "XButton 2 (Forward)",
+            "MouseScrollUp" => "Scroll Up",
+            "MouseScrollDown" => "Scroll Down",
+            "MouseScrollLeft" => "Scroll Left",
+            "MouseScrollRight" => "Scroll Right",
+            "MouseDoubleClick" => "Double Click",
+            "MouseTripleClick" => "Triple Click",
+            _ when keyName.StartsWith("MouseX", StringComparison.OrdinalIgnoreCase)
+                => keyName.Replace("MouseX", "XButton ", StringComparison.OrdinalIgnoreCase),
+            _ => keyName
+        };
     }
 
     public static bool TryParseAction(string actionName, out ActionType actionType)

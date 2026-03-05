@@ -490,6 +490,35 @@ public sealed class ModifierSessionTests
     }
 
     [Fact]
+    public void MouseButtonBinding_WithModifiers_DoesNotRegisterAsModifierOnly()
+    {
+        var session = new ModifierSession();
+        var config = new AppConfig
+        {
+            Hotkeys = new Dictionary<string, HotkeyBinding>
+            {
+                ["mouse_test"] = new()
+                {
+                    Modifiers = ["Ctrl"],
+                    Key = "MouseX1",
+                    Action = "TaskView"
+                }
+            }
+        };
+        session.BuildLookup(config);
+
+        var triggered = new List<ActionType>();
+        session.ActionTriggered += a => triggered.Add(a);
+
+        // Press Ctrl alone — must NOT trigger TaskView
+        session.OnKeyStateChanged(VK_LCONTROL, true);
+        Assert.Empty(triggered);
+
+        session.OnKeyStateChanged(VK_LCONTROL, false);
+        Assert.Empty(triggered);
+    }
+
+    [Fact]
     public void MultipleKeys_WithoutModifiers_NeverTrigger()
     {
         var session = new ModifierSession();

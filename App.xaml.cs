@@ -21,6 +21,7 @@ public partial class App : Application
     private readonly DragHandler _dragHandler;
     private readonly SnapCycleTracker _snapTracker = new();
     private readonly MouseHook _mouseHook;
+    private readonly MouseHotkeyMatcher _mouseHotkeyMatcher;
     private readonly GestureEngine _gestureEngine;
     private readonly WindowEventHook _windowEventHook;
     private readonly LaunchRuleEngine _launchRuleEngine;
@@ -65,6 +66,10 @@ public partial class App : Application
         _hotkeyManager = new HotkeyManager(_configManager, OnHotkeyAction);
 
         _mouseHook = new MouseHook();
+        _mouseHotkeyMatcher = new MouseHotkeyMatcher();
+        _mouseHotkeyMatcher.BuildLookup(_configManager.CurrentConfig);
+        _mouseHotkeyMatcher.ActionMatched += OnMouseHotkeyAction;
+        _mouseHook.HotkeyMatcher = _mouseHotkeyMatcher.TryMatch;
         _gestureEngine = new GestureEngine(_mouseHook, _dragHandler, _dispatcherQueue);
         _gestureEngine.BuildLookup(_configManager.CurrentConfig);
         _gestureEngine.GestureTriggered += OnGestureAction;
@@ -176,6 +181,11 @@ public partial class App : Application
     private void OnGestureAction(ActionType action)
     {
         DispatchAction(action, null);
+    }
+
+    private void OnMouseHotkeyAction(ActionType action, Dictionary<string, double> parameters)
+    {
+        DispatchAction(action, parameters);
     }
 
     private void DispatchAction(ActionType action, Dictionary<string, double>? parameters)
@@ -311,6 +321,7 @@ public partial class App : Application
         UpdateHookOverrides();
 
         _modifierSession.BuildLookup(newConfig);
+        _mouseHotkeyMatcher.BuildLookup(newConfig);
         _gestureEngine.BuildLookup(newConfig);
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
         UpdateWinKeyDelay();

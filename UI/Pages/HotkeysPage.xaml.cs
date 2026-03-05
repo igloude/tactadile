@@ -196,9 +196,11 @@ public sealed partial class HotkeysPage : Page
 
         // Key capture area
         string capturedKeyName = vm.Binding.Key ?? "";
+        bool currentIsMouse = ConfigManager.IsMouseButton(capturedKeyName);
+
         var keyDisplay = new TextBlock
         {
-            Text = string.IsNullOrEmpty(capturedKeyName) ? "(none)" : capturedKeyName,
+            Text = (!currentIsMouse && !string.IsNullOrEmpty(capturedKeyName)) ? capturedKeyName : "(none)",
             VerticalAlignment = Microsoft.UI.Xaml.VerticalAlignment.Center,
             FontFamily = new Microsoft.UI.Xaml.Media.FontFamily("Consolas"),
             FontSize = 14,
@@ -213,11 +215,75 @@ public sealed partial class HotkeysPage : Page
         keyPanel.Children.Add(recordButton);
         keyPanel.Children.Add(clearKeyButton);
 
+        // Mouse button dropdown
+        var mouseButtonItems = new (string configName, string displayName)[]
+        {
+            ("MouseLeft", "Left Click"),
+            ("MouseRight", "Right Click"),
+            ("MouseMiddle", "Middle Click"),
+            ("MouseX1", "XButton 1 (Back)"),
+            ("MouseX2", "XButton 2 (Forward)"),
+            ("MouseScrollUp", "Scroll Up"),
+            ("MouseScrollDown", "Scroll Down"),
+            ("MouseScrollLeft", "Scroll Left"),
+            ("MouseScrollRight", "Scroll Right"),
+            ("MouseDoubleClick", "Double Click"),
+            ("MouseTripleClick", "Triple Click"),
+        };
+
+        var mouseButtonCombo = new ComboBox
+        {
+            PlaceholderText = "Select mouse button",
+            Width = 220,
+            Visibility = Visibility.Collapsed
+        };
+
+        foreach (var (configName, displayName) in mouseButtonItems)
+            mouseButtonCombo.Items.Add(new ComboBoxItem { Content = displayName, Tag = configName });
+
+        if (currentIsMouse)
+        {
+            for (int i = 0; i < mouseButtonCombo.Items.Count; i++)
+            {
+                if ((string)((ComboBoxItem)mouseButtonCombo.Items[i]).Tag == capturedKeyName)
+                {
+                    mouseButtonCombo.SelectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // Input mode toggle
+        var rbKeyboard = new RadioButton { Content = "Keyboard", GroupName = "InputMode", MinWidth = 0 };
+        var rbMouse = new RadioButton { Content = "Mouse button", GroupName = "InputMode", MinWidth = 0 };
+
+        if (currentIsMouse)
+            rbMouse.IsChecked = true;
+        else
+            rbKeyboard.IsChecked = true;
+
+        void UpdateInputMode()
+        {
+            bool isMouse = rbMouse.IsChecked == true;
+            keyPanel.Visibility = isMouse ? Visibility.Collapsed : Visibility.Visible;
+            mouseButtonCombo.Visibility = isMouse ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        rbKeyboard.Checked += (s, a) => UpdateInputMode();
+        rbMouse.Checked += (s, a) => UpdateInputMode();
+        UpdateInputMode();
+
+        var inputModePanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12 };
+        inputModePanel.Children.Add(rbKeyboard);
+        inputModePanel.Children.Add(rbMouse);
+
         var layout = new StackPanel { Spacing = 12 };
         layout.Children.Add(new TextBlock { Text = "Modifiers:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
         layout.Children.Add(modPanel);
-        layout.Children.Add(new TextBlock { Text = "Key (optional):", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+        layout.Children.Add(new TextBlock { Text = "Trigger:", FontWeight = Microsoft.UI.Text.FontWeights.SemiBold });
+        layout.Children.Add(inputModePanel);
         layout.Children.Add(keyPanel);
+        layout.Children.Add(mouseButtonCombo);
 
         // Parameter inputs for actions that have configurable parameters
         NumberBox? widthBox = null, heightBox = null;
@@ -293,14 +359,32 @@ public sealed partial class HotkeysPage : Page
             XamlRoot = this.XamlRoot
         };
 
-        // Enable OK only when at least one modifier is checked
+        // Enable OK based on input mode and validation rules
         void UpdateOkEnabled(object? s = null, RoutedEventArgs? a = null)
         {
-            dialog.IsPrimaryButtonEnabled =
-                chkCtrl.IsChecked == true ||
-                chkShift.IsChecked == true ||
-                chkAlt.IsChecked == true ||
-                chkWin.IsChecked == true;
+            bool hasModifier = chkCtrl.IsChecked == true || chkShift.IsChecked == true
+                || chkAlt.IsChecked == true || chkWin.IsChecked == true;
+
+            if (rbMouse.IsChecked == true)
+            {
+                bool hasSelection = mouseButtonCombo.SelectedItem != null;
+                if (!hasSelection)
+                {
+                    dialog.IsPrimaryButtonEnabled = false;
+                    return;
+                }
+
+                string selectedMouse = (string)((ComboBoxItem)mouseButtonCombo.SelectedItem!).Tag!;
+
+                // Left/Right click require at least one modifier (safety)
+                bool requiresModifier = selectedMouse is "MouseLeft" or "MouseRight";
+                dialog.IsPrimaryButtonEnabled = !requiresModifier || hasModifier;
+            }
+            else
+            {
+                // Keyboard mode: at least one modifier required
+                dialog.IsPrimaryButtonEnabled = hasModifier;
+            }
         }
 
         chkCtrl.Checked += UpdateOkEnabled;
@@ -311,6 +395,9 @@ public sealed partial class HotkeysPage : Page
         chkAlt.Unchecked += UpdateOkEnabled;
         chkWin.Checked += UpdateOkEnabled;
         chkWin.Unchecked += UpdateOkEnabled;
+        rbKeyboard.Checked += UpdateOkEnabled;
+        rbMouse.Checked += UpdateOkEnabled;
+        mouseButtonCombo.SelectionChanged += (s, a) => UpdateOkEnabled();
         UpdateOkEnabled();
 
         // Record button: listen for one non-modifier key press
@@ -358,7 +445,11 @@ public sealed partial class HotkeysPage : Page
             if (chkWin.IsChecked == true) modList.Add("Win");
 
             vm.Binding.Modifiers = modList;
-            vm.Binding.Key = capturedKeyName;
+
+            if (rbMouse.IsChecked == true && mouseButtonCombo.SelectedItem is ComboBoxItem selectedItem)
+                vm.Binding.Key = (string)selectedItem.Tag;
+            else
+                vm.Binding.Key = capturedKeyName;
 
             // Save parameter values
             if (vm.ActionType == ActionType.ResizeWindow && widthBox != null && heightBox != null)
@@ -486,7 +577,11 @@ public class HotkeyBindingViewModel : INotifyPropertyChanged
                 return "(none)";
             var parts = new List<string>(Binding.Modifiers);
             if (!string.IsNullOrEmpty(Binding.Key))
-                parts.Add(Binding.Key);
+            {
+                parts.Add(ConfigManager.IsMouseButton(Binding.Key)
+                    ? ConfigManager.GetFriendlyMouseButtonName(Binding.Key)
+                    : Binding.Key);
+            }
             return string.Join(" + ", parts);
         }
     }

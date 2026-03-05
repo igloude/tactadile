@@ -259,6 +259,124 @@ public sealed class ConfigManagerTests
         Assert.Equal("Snap Left (cycle)", ConfigManager.GetFriendlyConfigKeyName("snap_left", ActionType.SnapLeft));
     }
 
+    // Mouse button parsing tests
+
+    [Theory]
+    [InlineData("MouseLeft", true)]
+    [InlineData("MouseRight", true)]
+    [InlineData("MouseMiddle", true)]
+    [InlineData("MouseX1", true)]
+    [InlineData("MouseX2", true)]
+    [InlineData("MouseScrollUp", true)]
+    [InlineData("MouseDoubleClick", true)]
+    [InlineData("MouseX20", true)]
+    [InlineData("Z", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void IsMouseButton_CorrectlyIdentifies(string? keyName, bool expected)
+    {
+        Assert.Equal(expected, ConfigManager.IsMouseButton(keyName));
+    }
+
+    [Theory]
+    [InlineData("MouseLeft", 0x10001u)]
+    [InlineData("MouseRight", 0x10002u)]
+    [InlineData("MouseMiddle", 0x10003u)]
+    [InlineData("MouseX1", 0x10004u)]
+    [InlineData("MouseX2", 0x10005u)]
+    [InlineData("MouseScrollUp", 0x10006u)]
+    [InlineData("MouseScrollDown", 0x10007u)]
+    [InlineData("MouseScrollLeft", 0x10008u)]
+    [InlineData("MouseScrollRight", 0x10009u)]
+    [InlineData("MouseDoubleClick", 0x1000Au)]
+    [InlineData("MouseTripleClick", 0x1000Bu)]
+    [InlineData("MouseX3", 0x10010u)]
+    public void TryParseMouseButton_ValidNames(string name, uint expectedId)
+    {
+        Assert.True(ConfigManager.TryParseMouseButton(name, out uint id));
+        Assert.Equal(expectedId, id);
+    }
+
+    [Theory]
+    [InlineData("Z")]
+    [InlineData("")]
+    [InlineData("InvalidMouse")]
+    public void TryParseMouseButton_InvalidNames_ReturnsFalse(string name)
+    {
+        Assert.False(ConfigManager.TryParseMouseButton(name, out _));
+    }
+
+    [Fact]
+    public void TryParseMouseButton_CaseInsensitive()
+    {
+        Assert.True(ConfigManager.TryParseMouseButton("mouseleft", out uint id1));
+        Assert.True(ConfigManager.TryParseMouseButton("MOUSELEFT", out uint id2));
+        Assert.Equal(id1, id2);
+    }
+
+    [Theory]
+    [InlineData(NativeConstants.WM_LBUTTONDOWN, 0u, 0x10001u)]
+    [InlineData(NativeConstants.WM_RBUTTONDOWN, 0u, 0x10002u)]
+    [InlineData(NativeConstants.WM_MBUTTONDOWN, 0u, 0x10003u)]
+    [InlineData(NativeConstants.WM_XBUTTONDOWN, 0x10000u, 0x10004u)]  // XBUTTON1 in high word
+    [InlineData(NativeConstants.WM_XBUTTONDOWN, 0x20000u, 0x10005u)]  // XBUTTON2 in high word
+    [InlineData(NativeConstants.WM_XBUTTONDOWN, 0x30000u, 0x10010u)]  // XBUTTON3 in high word
+    public void MouseMessageToId_MapsCorrectly(int msg, uint mouseData, uint expectedId)
+    {
+        Assert.Equal(expectedId, ConfigManager.MouseMessageToId(msg, mouseData));
+    }
+
+    [Fact]
+    public void MouseMessageToId_UnknownMessage_ReturnsZero()
+    {
+        Assert.Equal(0u, ConfigManager.MouseMessageToId(NativeConstants.WM_MOUSEMOVE, 0));
+    }
+
+    [Fact]
+    public void MouseIdToName_ValidId_ReturnsName()
+    {
+        Assert.Equal("MouseLeft", ConfigManager.MouseIdToName(0x10001));
+        Assert.Equal("MouseX2", ConfigManager.MouseIdToName(0x10005));
+    }
+
+    [Fact]
+    public void MouseButton_RoundTrip_IdToNameToId()
+    {
+        ConfigManager.TryParseMouseButton("MouseX1", out uint id);
+        string name = ConfigManager.MouseIdToName(id);
+        ConfigManager.TryParseMouseButton(name, out uint id2);
+        Assert.Equal(id, id2);
+    }
+
+    [Theory]
+    [InlineData("MouseLeft", "Left Click")]
+    [InlineData("MouseRight", "Right Click")]
+    [InlineData("MouseMiddle", "Middle Click")]
+    [InlineData("MouseX1", "XButton 1 (Back)")]
+    [InlineData("MouseX2", "XButton 2 (Forward)")]
+    [InlineData("MouseScrollUp", "Scroll Up")]
+    [InlineData("MouseDoubleClick", "Double Click")]
+    [InlineData("MouseTripleClick", "Triple Click")]
+    public void GetFriendlyMouseButtonName_ReturnsDisplayName(string keyName, string expected)
+    {
+        Assert.Equal(expected, ConfigManager.GetFriendlyMouseButtonName(keyName));
+    }
+
+    [Fact]
+    public void VkToKeyName_MouseId_ReturnsMouseName()
+    {
+        Assert.Equal("MouseLeft", ConfigManager.VkToKeyName(0x10001));
+        Assert.Equal("MouseX1", ConfigManager.VkToKeyName(0x10004));
+    }
+
+    [Fact]
+    public void TryParseKey_MouseButtonName_ReturnsFalse()
+    {
+        // Mouse button names should NOT be parsed by TryParseKey (keyboard-only)
+        Assert.False(ConfigManager.TryParseKey("MouseLeft", out _));
+        Assert.False(ConfigManager.TryParseKey("MouseX1", out _));
+    }
+
     // DisplayOrder tests
 
     [Fact]
