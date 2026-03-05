@@ -10,9 +10,9 @@ config   := "Debug"
 default:
     @just --list
 
-# Build and run a worktree with interactive selector + hot-reload
+# Build and run a worktree with interactive selector + hot-reload (new window)
 worktree:
-    & "{{justfile_directory()}}\dev.ps1" -Platform {{platform}} -Configuration {{config}}
+    Start-Process powershell -ArgumentList '-NoExit', '-File', '"{{justfile_directory()}}\dev.ps1"', '-Platform', '{{platform}}', '-Configuration', '{{config}}'
 
 # Build the main repo
 build:
@@ -22,6 +22,11 @@ build:
 run:
     dotnet build "{{justfile_directory()}}" -p:Platform={{platform}} -c {{config}}; \
     & "{{justfile_directory()}}\bin\{{platform}}\{{config}}\net8.0-windows10.0.19041.0\Tactadile.exe"
+
+# Stop all running Tactadile instances and dev watchers
+stop:
+    Get-Process -Name "Tactadile" -ErrorAction SilentlyContinue | Stop-Process -Force; \
+    Write-Host "[just] Stopped Tactadile" -ForegroundColor Yellow
 
 # Clean build output
 clean:
