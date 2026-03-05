@@ -34,6 +34,7 @@ public sealed partial class GeneralPage : Page
         EdgeSnapToggle.IsOn = _configManager.CurrentConfig.EdgeSnappingEnabled;
         OverrideKeybindsToggle.IsOn = _configManager.CurrentConfig.OverrideWindowsKeybinds;
         DisableNativeSnapToggle.IsOn = _configManager.CurrentConfig.DisableNativeSnap;
+        BlockCopilotToggle.IsOn = _configManager.CurrentConfig.BlockCopilot;
         WinKeyDelayToggle.IsOn = _configManager.CurrentConfig.WinKeyDelayEnabled;
         WinKeyDelaySlider.Value = _configManager.CurrentConfig.WinKeyDelayMs;
         WinKeyDelayValueText.Text = $"{_configManager.CurrentConfig.WinKeyDelayMs} ms";
@@ -72,6 +73,15 @@ public sealed partial class GeneralPage : Page
 
         var config = _configManager.CurrentConfig;
         config.DisableNativeSnap = DisableNativeSnapToggle.IsOn;
+        _configManager.Save(config);
+    }
+
+    private void OnBlockCopilotToggled(object sender, RoutedEventArgs e)
+    {
+        if (_loading || _configManager == null) return;
+
+        var config = _configManager.CurrentConfig;
+        config.BlockCopilot = BlockCopilotToggle.IsOn;
         _configManager.Save(config);
     }
 

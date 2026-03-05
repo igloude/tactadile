@@ -73,6 +73,7 @@ public partial class App : Application
         _modifierSession.ModifierFlagsChanged += _gestureEngine.OnModifiersChanged;
 
         _keyboardHook.Install();
+        _keyboardHook.SetBlockCopilot(_configManager.CurrentConfig.BlockCopilot);
         _mouseHook.Install();
 
         _windowEventHook = new WindowEventHook();
@@ -314,6 +315,7 @@ public partial class App : Application
         _dragHandler.EdgeSnappingEnabled = newConfig.EdgeSnappingEnabled;
         UpdateWinKeyDelay();
         _winSnapOverride.SetEnabled(newConfig.DisableNativeSnap);
+        _keyboardHook.SetBlockCopilot(newConfig.BlockCopilot);
 
         _launchRuleEngine.LoadRules(newConfig);
         if (newConfig.AutoPositionEnabled && _licenseManager.IsAutoPositionAllowed)

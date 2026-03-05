@@ -14,6 +14,9 @@ public sealed class KeyboardHook : IDisposable
     private volatile bool _overrideEnabled;
     private HashSet<(uint modFlags, uint vk)> _overrideCombos = new();
 
+    // Block Copilot (Win+C) independently of the override system
+    private volatile bool _blockCopilot;
+
     // Ref-counted modifier tracking for override matching
     private int _winCount, _shiftCount, _ctrlCount, _altCount;
 
@@ -34,6 +37,8 @@ public sealed class KeyboardHook : IDisposable
     /// Updates the set of combos that should be suppressed by the hook.
     /// Actions are dispatched via ModifierSession (KeyStateChanged still fires).
     /// </summary>
+    public void SetBlockCopilot(bool block) => _blockCopilot = block;
+
     public void SetOverrides(bool enabled, IReadOnlySet<(uint modFlags, uint vk)> combos)
     {
         _overrideEnabled = enabled;
@@ -138,6 +143,17 @@ public sealed class KeyboardHook : IDisposable
                             SendMenuMaskKey();
 
                         return (IntPtr)1; // Suppress key from reaching Windows
+                    }
+                }
+
+                // Block Copilot (Win+C) independently of override system
+                if (_blockCopilot && isDown && !IsModifierVk(hookStruct.vkCode))
+                {
+                    uint mf = ComputeModFlags();
+                    if ((mf & NativeConstants.MOD_WIN) != 0 && hookStruct.vkCode == 0x43)
+                    {
+                        SendMenuMaskKey();
+                        return (IntPtr)1;
                     }
                 }
 

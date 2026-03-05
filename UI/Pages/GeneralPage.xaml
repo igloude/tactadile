@@ -81,6 +81,25 @@
 
         <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
+        <!-- Block Copilot -->
+        <Grid Padding="0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock Text="Block Copilot (Win+C)" FontWeight="SemiBold" />
+                <TextBlock Text="Prevent Windows Copilot from opening when Win+C is pressed"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           FontSize="12" Margin="0,2,0,0" TextWrapping="Wrap" />
+            </StackPanel>
+            <ToggleSwitch x:Name="BlockCopilotToggle" Grid.Column="1"
+                          VerticalAlignment="Center" MinWidth="0"
+                          Toggled="OnBlockCopilotToggled" />
+        </Grid>
+
+        <Border Height="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+
         <!-- Delay Start Menu on Win key -->
         <Grid Padding="0,12">
             <Grid.ColumnDefinitions>
