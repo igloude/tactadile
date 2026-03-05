@@ -11,6 +11,7 @@ public sealed class AppConfig
     public bool DisableNativeSnap { get; set; } = false;
     public bool WinKeyDelayEnabled { get; set; } = false;
     public int WinKeyDelayMs { get; set; } = 250;
+    public bool BlockCopilot { get; set; } = false;
     public bool AutoPositionEnabled { get; set; } = false;
     public List<LaunchRule> LaunchRules { get; set; } = new();
 }
